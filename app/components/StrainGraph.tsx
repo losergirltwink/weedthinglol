@@ -48,10 +48,10 @@ export default function StrainGraph() {
     focusSet,
   } = useStrainExplorer();
 
-  // Bumped to force a fresh SigmaContainer when the WebGL context is lost.
+  // Bumped to remount the SigmaContainer once a lost WebGL context is restored.
   const [glGeneration, setGlGeneration] = useState(0);
-  const handleContextLost = useCallback(() => {
-    console.warn("Sigma WebGL context lost — remounting renderer to recover.");
+  const handleContextRestored = useCallback(() => {
+    console.warn("Sigma WebGL context restored — remounting renderer to recover.");
     setGlGeneration((g) => g + 1);
   }, []);
 
@@ -75,7 +75,7 @@ export default function StrainGraph() {
             activeTypes={activeTypes}
             dimLowConfidence={source === ALL_SOURCE.id}
             onSelect={setSelectedId}
-            onContextLost={handleContextLost}
+            onContextRestored={handleContextRestored}
           />
         </SigmaContainer>
       ) : (

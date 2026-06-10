@@ -7,6 +7,7 @@ import {
   useRegisterEvents,
   useSetSettings,
 } from "@react-sigma/core";
+import { drawDiscNodeLabel } from "sigma/rendering";
 
 import type { StrainType } from "@/app/lib/strains";
 import type { StrainGraphType } from "@/app/lib/graph-utils";
@@ -41,8 +42,8 @@ interface Props {
   /** Union view: mute non-curated nodes at rest so the verified core stands out. */
   dimLowConfidence: boolean;
   onSelect: (id: string | null) => void;
-  /** Fired when the WebGL context is lost, so the parent can remount Sigma. */
-  onContextLost: () => void;
+  /** Fired once the WebGL context is restored, so the parent can remount Sigma. */
+  onContextRestored: () => void;
 }
 
 export function GraphController({
@@ -53,7 +54,7 @@ export function GraphController({
   activeTypes,
   dimLowConfidence,
   onSelect,
-  onContextLost,
+  onContextRestored,
 }: Props) {
   const sigma = useSigma();
   const loadGraph = useLoadGraph();
@@ -67,22 +68,27 @@ export function GraphController({
   }, [loadGraph, graph]);
 
   // WebGL context loss (GPU reclaim, tab backgrounding, large scenes on weak
-  // GPUs) leaves Sigma's canvases frozen/ghosted. preventDefault keeps the
-  // canvas eligible for restoration, then we ask the parent to remount Sigma —
-  // a fresh instance gets a new context and reloads the graph cleanly, which is
-  // far more reliable than rebuilding Sigma's context-bound GL programs in place.
+  // GPUs) leaves Sigma's canvases frozen/ghosted. preventDefault on the loss
+  // event tells the browser to restore the context; we wait for the
+  // `webglcontextrestored` event before asking the parent to remount Sigma.
+  // Recreating it on the loss event instead races a still-dead GPU and fails to
+  // compile node programs ("could not find a suitable program for circle").
   useEffect(() => {
     const canvases = Array.from(
       sigma.getContainer().querySelectorAll("canvas"),
     );
-    const onLost = (e: Event) => {
-      e.preventDefault();
-      onContextLost();
-    };
-    canvases.forEach((c) => c.addEventListener("webglcontextlost", onLost));
+    const onLost = (e: Event) => e.preventDefault();
+    const onRestored = () => onContextRestored();
+    canvases.forEach((c) => {
+      c.addEventListener("webglcontextlost", onLost);
+      c.addEventListener("webglcontextrestored", onRestored);
+    });
     return () =>
-      canvases.forEach((c) => c.removeEventListener("webglcontextlost", onLost));
-  }, [sigma, onContextLost]);
+      canvases.forEach((c) => {
+        c.removeEventListener("webglcontextlost", onLost);
+        c.removeEventListener("webglcontextrestored", onRestored);
+      });
+  }, [sigma, onContextRestored]);
 
   // Wire interactions.
   useEffect(() => {
@@ -122,6 +128,17 @@ export function GraphController({
       (hoverSet !== null && !hoverSet.has(node));
 
     setSettings({
+      // The selected node and the hovered node are labeled by the hover renderer
+      // (drawHover), which draws their label inside a dark box. Sigma's regular
+      // label pass doesn't know that and would draw the SAME label again at a
+      // slightly different offset — a doubled/ghosted label, very visible zoomed
+      // in. Skip those two here so each is labeled exactly once.
+      defaultDrawNodeLabel: (context, data, labelSettings) => {
+        const key = (data as { key?: string }).key;
+        if (key === selectedId || key === hovered) return;
+        drawDiscNodeLabel(context, data, labelSettings);
+      },
+
       nodeReducer: (node, data) => {
         if (!activeTypes.has(data.strainType as StrainType)) {
           return { ...data, hidden: true };
