@@ -4,6 +4,13 @@
 
 export type StrainType = "indica" | "sativa" | "hybrid" | "landrace";
 
+/**
+ * Confidence tier of a data source (Phase 4). A gradient from hand-verified
+ * (`curated`) to scraped-but-structured (`documented`) to sparse/contested
+ * (`crowd`). Drives union-merge precedence and provenance display.
+ */
+export type Confidence = "curated" | "documented" | "crowd";
+
 /** A curated source record (data/strains.json). No layout/derived fields. */
 export interface Strain {
   id: string;

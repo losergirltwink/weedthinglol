@@ -83,8 +83,29 @@ meaningful checkpoints. Because shared logic lives in `useStrainExplorer` +
 `react-force-graph-3d` versions; `/3d` is code-split so three.js never loads on
 the 2D path. **Do not treat 3D lagging behind 2D as a bug.**
 
+## Next: Phase 4 — source as a swappable axis (PLANNED)
+
+Generalize the single curated dataset into N named **sources** on a
+confidence/coverage gradient (`curated` → `expanded`/Leafly → `crowd`), selectable
+at runtime via a dropdown, plus an `all` **union** view that visualizes them
+together with provenance. Source becomes a third modular axis alongside the
+renderer (2D/3D).
+
+Principle: **separate at rest, unified at view-time.** Each source is stored and
+massaged in isolation (`data/<id>/`, with `raw/` + `patch.json` so raw scrapes are
+never hand-edited); each compiles to its own offline-baked `public/graph.<id>.json`;
+"all together" is just another build output that merges with **curated-wins
+precedence**. A `SourceAdapter` contract (`scripts/adapters/`) is the standardized
+input point — any dataset that returns `{ strains, lineage }` flows through the
+existing validate→derive→bake→layout pipeline and both renderers for free, exactly
+like the shared `useStrainExplorer` hook already does for 2D/3D.
+
+**Full plan — read before starting Phase 4 work: `docs/phase-4-plan.md`.**
+Until it lands, the single-source description in *Data workflow* above is current.
+
 ## Status
 
 Phases 0–3 complete: scaffold, curated data + build pipeline, explorer UX
 (focus/search/filter/detail), and the recommender. Experimental 3D view merged.
-See commit history (detailed messages) for the full arc.
+Phase 4 (multi-source) planned — see `docs/phase-4-plan.md`. See commit history
+(detailed messages) for the full arc.
