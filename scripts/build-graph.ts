@@ -42,7 +42,9 @@ for (const s of strains) {
   seen.add(s.id);
   graph.addNode(s.id, {
     label: s.name,
-    type: s.type,
+    // NB: stored as `strainType`, not `type` — Sigma reserves the node
+    // `type` attribute for selecting the rendering program.
+    strainType: s.type,
     effects: s.effects ?? [],
     ...(s.note ? { note: s.note } : {}),
   });
@@ -143,7 +145,7 @@ graph.forEachNode((node, attrs) => {
     descendants: desc,
     // Influence-scaled size: roots of big families render larger.
     size: 4 + Math.sqrt(desc) * 3,
-    color: TYPE_COLORS[attrs.type as keyof typeof TYPE_COLORS] ?? "#9ca3af",
+    color: TYPE_COLORS[attrs.strainType as keyof typeof TYPE_COLORS] ?? "#9ca3af",
   });
 });
 

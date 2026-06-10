@@ -10,7 +10,7 @@
       "key": "afghani",
       "attributes": {
         "label": "Afghani",
-        "type": "landrace",
+        "strainType": "landrace",
         "effects": [
           "relaxed",
           "sleepy",
@@ -28,7 +28,7 @@
       "key": "thai",
       "attributes": {
         "label": "Thai",
-        "type": "landrace",
+        "strainType": "landrace",
         "effects": [
           "energetic",
           "uplifted",
@@ -46,7 +46,7 @@
       "key": "colombian-gold",
       "attributes": {
         "label": "Colombian Gold",
-        "type": "landrace",
+        "strainType": "landrace",
         "effects": [
           "uplifted",
           "happy",
@@ -64,7 +64,7 @@
       "key": "acapulco-gold",
       "attributes": {
         "label": "Acapulco Gold",
-        "type": "landrace",
+        "strainType": "landrace",
         "effects": [
           "euphoric",
           "happy",
@@ -82,7 +82,7 @@
       "key": "durban-poison",
       "attributes": {
         "label": "Durban Poison",
-        "type": "landrace",
+        "strainType": "landrace",
         "effects": [
           "energetic",
           "uplifted",
@@ -100,7 +100,7 @@
       "key": "hindu-kush",
       "attributes": {
         "label": "Hindu Kush",
-        "type": "landrace",
+        "strainType": "landrace",
         "effects": [
           "relaxed",
           "sleepy",
@@ -118,7 +118,7 @@
       "key": "mexican-landrace",
       "attributes": {
         "label": "Mexican",
-        "type": "landrace",
+        "strainType": "landrace",
         "effects": [
           "uplifted",
           "energetic",
@@ -136,7 +136,7 @@
       "key": "purple-thai",
       "attributes": {
         "label": "Purple Thai",
-        "type": "landrace",
+        "strainType": "landrace",
         "effects": [
           "creative",
           "uplifted",
@@ -154,7 +154,7 @@
       "key": "south-indian",
       "attributes": {
         "label": "South Indian",
-        "type": "landrace",
+        "strainType": "landrace",
         "effects": [
           "relaxed",
           "sleepy"
@@ -171,7 +171,7 @@
       "key": "hawaiian",
       "attributes": {
         "label": "Hawaiian",
-        "type": "landrace",
+        "strainType": "landrace",
         "effects": [
           "happy",
           "uplifted",
@@ -189,7 +189,7 @@
       "key": "nepalese",
       "attributes": {
         "label": "Nepalese",
-        "type": "landrace",
+        "strainType": "landrace",
         "effects": [
           "relaxed",
           "happy",
@@ -207,7 +207,7 @@
       "key": "brazilian",
       "attributes": {
         "label": "Brazilian",
-        "type": "landrace",
+        "strainType": "landrace",
         "effects": [
           "uplifted",
           "energetic",
@@ -225,7 +225,7 @@
       "key": "chemdawg",
       "attributes": {
         "label": "Chemdawg",
-        "type": "hybrid",
+        "strainType": "hybrid",
         "effects": [
           "euphoric",
           "relaxed",
@@ -244,7 +244,7 @@
       "key": "purple-urkle",
       "attributes": {
         "label": "Purple Urkle",
-        "type": "indica",
+        "strainType": "indica",
         "effects": [
           "relaxed",
           "sleepy",
@@ -263,7 +263,7 @@
       "key": "blue-power",
       "attributes": {
         "label": "Blue Power",
-        "type": "hybrid",
+        "strainType": "hybrid",
         "effects": [
           "relaxed",
           "happy",
@@ -281,7 +281,7 @@
       "key": "pink-panties",
       "attributes": {
         "label": "Pink Panties",
-        "type": "hybrid",
+        "strainType": "hybrid",
         "effects": [
           "relaxed",
           "happy",
@@ -299,7 +299,7 @@
       "key": "skunk-1",
       "attributes": {
         "label": "Skunk #1",
-        "type": "hybrid",
+        "strainType": "hybrid",
         "effects": [
           "euphoric",
           "happy",
@@ -317,7 +317,7 @@
       "key": "northern-lights",
       "attributes": {
         "label": "Northern Lights",
-        "type": "indica",
+        "strainType": "indica",
         "effects": [
           "relaxed",
           "sleepy",
@@ -335,7 +335,7 @@
       "key": "haze",
       "attributes": {
         "label": "Haze",
-        "type": "sativa",
+        "strainType": "sativa",
         "effects": [
           "energetic",
           "creative",
@@ -353,7 +353,7 @@
       "key": "super-skunk",
       "attributes": {
         "label": "Super Skunk",
-        "type": "hybrid",
+        "strainType": "hybrid",
         "effects": [
           "relaxed",
           "happy",
@@ -371,7 +371,7 @@
       "key": "shiva-skunk",
       "attributes": {
         "label": "Shiva Skunk",
-        "type": "indica",
+        "strainType": "indica",
         "effects": [
           "relaxed",
           "euphoric",
@@ -389,7 +389,7 @@
       "key": "big-bud",
       "attributes": {
         "label": "Big Bud",
-        "type": "indica",
+        "strainType": "indica",
         "effects": [
           "relaxed",
           "happy",
@@ -407,7 +407,7 @@
       "key": "og-kush",
       "attributes": {
         "label": "OG Kush",
-        "type": "hybrid",
+        "strainType": "hybrid",
         "effects": [
           "relaxed",
           "happy",
@@ -426,7 +426,7 @@
       "key": "sour-diesel",
       "attributes": {
         "label": "Sour Diesel",
-        "type": "sativa",
+        "strainType": "sativa",
         "effects": [
           "energetic",
           "uplifted",
@@ -444,7 +444,7 @@
       "key": "bubba-kush",
       "attributes": {
         "label": "Bubba Kush",
-        "type": "indica",
+        "strainType": "indica",
         "effects": [
           "relaxed",
           "sleepy",
@@ -463,7 +463,7 @@
       "key": "master-kush",
       "attributes": {
         "label": "Master Kush",
-        "type": "indica",
+        "strainType": "indica",
         "effects": [
           "relaxed",
           "happy",
@@ -481,7 +481,7 @@
       "key": "triangle-kush",
       "attributes": {
         "label": "Triangle Kush",
-        "type": "hybrid",
+        "strainType": "hybrid",
         "effects": [
           "relaxed",
           "euphoric",
@@ -500,7 +500,7 @@
       "key": "blueberry",
       "attributes": {
         "label": "Blueberry",
-        "type": "indica",
+        "strainType": "indica",
         "effects": [
           "relaxed",
           "happy",
@@ -518,7 +518,7 @@
       "key": "blue-dream",
       "attributes": {
         "label": "Blue Dream",
-        "type": "hybrid",
+        "strainType": "hybrid",
         "effects": [
           "happy",
           "relaxed",
@@ -536,7 +536,7 @@
       "key": "granddaddy-purple",
       "attributes": {
         "label": "Granddaddy Purple",
-        "type": "indica",
+        "strainType": "indica",
         "effects": [
           "relaxed",
           "sleepy",
@@ -554,7 +554,7 @@
       "key": "cherry-pie",
       "attributes": {
         "label": "Cherry Pie",
-        "type": "hybrid",
+        "strainType": "hybrid",
         "effects": [
           "relaxed",
           "happy",
@@ -572,7 +572,7 @@
       "key": "girl-scout-cookies",
       "attributes": {
         "label": "Girl Scout Cookies",
-        "type": "hybrid",
+        "strainType": "hybrid",
         "effects": [
           "happy",
           "euphoric",
@@ -590,7 +590,7 @@
       "key": "thin-mint-gsc",
       "attributes": {
         "label": "Thin Mint GSC",
-        "type": "hybrid",
+        "strainType": "hybrid",
         "effects": [
           "euphoric",
           "relaxed",
@@ -609,7 +609,7 @@
       "key": "sunset-sherbet",
       "attributes": {
         "label": "Sunset Sherbet",
-        "type": "hybrid",
+        "strainType": "hybrid",
         "effects": [
           "happy",
           "relaxed",
@@ -627,7 +627,7 @@
       "key": "gelato",
       "attributes": {
         "label": "Gelato",
-        "type": "hybrid",
+        "strainType": "hybrid",
         "effects": [
           "relaxed",
           "euphoric",
@@ -645,7 +645,7 @@
       "key": "animal-mints",
       "attributes": {
         "label": "Animal Mints",
-        "type": "hybrid",
+        "strainType": "hybrid",
         "effects": [
           "relaxed",
           "happy",
@@ -663,7 +663,7 @@
       "key": "wedding-cake",
       "attributes": {
         "label": "Wedding Cake",
-        "type": "indica",
+        "strainType": "indica",
         "effects": [
           "relaxed",
           "happy",
@@ -681,7 +681,7 @@
       "key": "jack-herer",
       "attributes": {
         "label": "Jack Herer",
-        "type": "sativa",
+        "strainType": "sativa",
         "effects": [
           "energetic",
           "uplifted",
@@ -699,7 +699,7 @@
       "key": "white-widow",
       "attributes": {
         "label": "White Widow",
-        "type": "hybrid",
+        "strainType": "hybrid",
         "effects": [
           "euphoric",
           "energetic",
@@ -717,7 +717,7 @@
       "key": "ak-47",
       "attributes": {
         "label": "AK-47",
-        "type": "hybrid",
+        "strainType": "hybrid",
         "effects": [
           "relaxed",
           "happy",
@@ -735,7 +735,7 @@
       "key": "trainwreck",
       "attributes": {
         "label": "Trainwreck",
-        "type": "sativa",
+        "strainType": "sativa",
         "effects": [
           "euphoric",
           "uplifted",
@@ -753,7 +753,7 @@
       "key": "pineapple-express",
       "attributes": {
         "label": "Pineapple Express",
-        "type": "hybrid",
+        "strainType": "hybrid",
         "effects": [
           "happy",
           "uplifted",
@@ -771,7 +771,7 @@
       "key": "amnesia-haze",
       "attributes": {
         "label": "Amnesia Haze",
-        "type": "sativa",
+        "strainType": "sativa",
         "effects": [
           "euphoric",
           "uplifted",
@@ -789,7 +789,7 @@
       "key": "green-crack",
       "attributes": {
         "label": "Green Crack",
-        "type": "sativa",
+        "strainType": "sativa",
         "effects": [
           "energetic",
           "focused",
@@ -808,7 +808,7 @@
       "key": "headband",
       "attributes": {
         "label": "Headband",
-        "type": "hybrid",
+        "strainType": "hybrid",
         "effects": [
           "relaxed",
           "happy",

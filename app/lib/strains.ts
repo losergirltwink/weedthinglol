@@ -22,7 +22,9 @@ export interface Lineage {
 /** Node attributes baked into graph.json by the build script. */
 export interface StrainNodeAttributes {
   label: string;
-  type: StrainType;
+  // Stored as `strainType` (not `type`) because Sigma reserves the node
+  // `type` attribute for the rendering program name.
+  strainType: StrainType;
   effects: string[];
   note?: string;
   generation: number;
