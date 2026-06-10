@@ -5,15 +5,13 @@
 // version at "/". Reuses the exact same data, scoring, and panels — only the
 // renderer and layout differ.
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { DirectedGraph } from "graphology";
-import type { SerializedGraph } from "graphology-types";
+import { useEffect, useMemo, useRef } from "react";
 import ForceGraph3D from "react-force-graph-3d";
 import type { Object3D } from "three";
 import SpriteText from "three-spritetext";
 
-import { STRAIN_TYPES, type StrainNodeAttributes, type StrainType } from "@/app/lib/strains";
-import { computeFamily, type StrainGraphType } from "@/app/lib/graph-utils";
+import type { StrainType } from "@/app/lib/strains";
+import { useStrainExplorer } from "@/app/lib/useStrainExplorer";
 import { SearchPanel } from "./graph/SearchPanel";
 import { FilterLegend } from "./graph/FilterLegend";
 import { DetailPanel } from "./graph/DetailPanel";
@@ -41,31 +39,21 @@ interface Link3D {
 const linkId = (e: string | Node3D) => (typeof e === "object" ? e.id : e);
 
 export default function StrainGraph3D() {
-  const [graph, setGraph] = useState<StrainGraphType | null>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [activeTypes, setActiveTypes] = useState<Set<StrainType>>(
-    () => new Set(STRAIN_TYPES),
-  );
-  const [recommendedSet, setRecommendedSet] = useState<Set<string> | null>(null);
+  // Shared interaction state machine (selection, filters, recs, lit sets).
+  const {
+    graph,
+    selectedId,
+    setSelectedId,
+    activeTypes,
+    toggleType,
+    relevantSet,
+    handleRecommendations,
+  } = useStrainExplorer();
+
   // react-force-graph instance handle, for camera control. Typed loosely: the
   // library's generic ForceGraphMethods type is awkward to spell out here.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const fgRef = useRef<any>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const res = await fetch("/graph.json");
-      const data = (await res.json()) as SerializedGraph<StrainNodeAttributes>;
-      if (cancelled) return;
-      const g = new DirectedGraph<StrainNodeAttributes>();
-      g.import(data);
-      setGraph(g);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   // Build the {nodes, links} payload once — keeping it stable so the force
   // simulation lays out a single time instead of thrashing on every filter.
@@ -81,30 +69,6 @@ export default function StrainGraph3D() {
     const links: Link3D[] = graph.mapEdges((_e, _a, s, t) => ({ source: s, target: t }));
     return { nodes, links };
   }, [graph]);
-
-  const focusSet = useMemo(
-    () => (graph && selectedId ? computeFamily(graph, selectedId) : null),
-    [graph, selectedId],
-  );
-
-  // Lit set: selected strain's family line ∪ recommended strains (mirrors 2D).
-  const relevantSet = useMemo(() => {
-    if (!focusSet && !recommendedSet) return null;
-    return new Set<string>([...(focusSet ?? []), ...(recommendedSet ?? [])]);
-  }, [focusSet, recommendedSet]);
-
-  const handleRecommendations = useCallback((ids: Set<string>) => {
-    setRecommendedSet(ids.size ? ids : null);
-  }, []);
-
-  const toggleType = useCallback((type: StrainType) => {
-    setActiveTypes((prev) => {
-      const next = new Set(prev);
-      if (next.has(type)) next.delete(type);
-      else next.add(type);
-      return next;
-    });
-  }, []);
 
   // Fly the camera to the selected node once the layout has positions.
   useEffect(() => {
