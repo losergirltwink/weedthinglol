@@ -27,6 +27,7 @@ export interface SourceDef {
  */
 export const SOURCES: SourceDef[] = [
   { id: "curated", label: "Curated", confidence: "curated", dir: "curated" },
+  { id: "expanded-demo", label: "Expanded (demo)", confidence: "documented", dir: "expanded-demo" },
 ];
 
 /** The union pseudo-source: merge of SOURCES, provenance-tagged. */

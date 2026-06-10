@@ -4,9 +4,13 @@
 
 import type { SourceAdapter } from "./types";
 import { curatedAdapter } from "./curated";
+import { makeLeaflyAdapter } from "./leafly";
+
+const expandedDemoAdapter = makeLeaflyAdapter("expanded-demo", "expanded-demo");
 
 const ADAPTERS: Record<string, SourceAdapter> = {
   [curatedAdapter.id]: curatedAdapter,
+  [expandedDemoAdapter.id]: expandedDemoAdapter,
 };
 
 export function adapterFor(id: string): SourceAdapter {

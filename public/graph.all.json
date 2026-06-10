@@ -17,13 +17,13 @@
           "happy"
         ],
         "generation": 0,
-        "descendants": 18,
-        "size": 16.727922061357855,
+        "descendants": 22,
+        "size": 18.07124727947029,
         "color": "#a16207",
         "source": "curated",
         "confidence": "curated",
-        "x": -6.145334243774414,
-        "y": -7.1034955978393555
+        "x": -14.807222366333008,
+        "y": -6.375638961791992
       }
     },
     {
@@ -37,13 +37,13 @@
           "creative"
         ],
         "generation": 0,
-        "descendants": 25,
-        "size": 19,
+        "descendants": 33,
+        "size": 21.233687939614086,
         "color": "#a16207",
         "source": "curated",
         "confidence": "curated",
-        "x": -17.828887939453125,
-        "y": -4.040197849273682
+        "x": -4.202181816101074,
+        "y": -11.342741012573242
       }
     },
     {
@@ -57,13 +57,13 @@
           "energetic"
         ],
         "generation": 0,
-        "descendants": 15,
-        "size": 15.618950038622252,
+        "descendants": 19,
+        "size": 17.076696830622023,
         "color": "#a16207",
         "source": "curated",
         "confidence": "curated",
-        "x": -25.848257064819336,
-        "y": 2.2147603034973145
+        "x": -30.419509887695312,
+        "y": -7.468190670013428
       }
     },
     {
@@ -77,13 +77,13 @@
           "energetic"
         ],
         "generation": 0,
-        "descendants": 14,
-        "size": 15.224972160321824,
+        "descendants": 18,
+        "size": 16.727922061357855,
         "color": "#a16207",
         "source": "curated",
         "confidence": "curated",
-        "x": -14.30134105682373,
-        "y": 6.514997482299805
+        "x": -38.99006271362305,
+        "y": 2.755120038986206
       }
     },
     {
@@ -97,13 +97,13 @@
           "focused"
         ],
         "generation": 0,
-        "descendants": 7,
-        "size": 11.937253933193773,
+        "descendants": 14,
+        "size": 15.224972160321824,
         "color": "#a16207",
         "source": "curated",
         "confidence": "curated",
-        "x": 25.497974395751953,
-        "y": -20.095008850097656
+        "x": 16.66573715209961,
+        "y": -19.805805206298828
       }
     },
     {
@@ -117,13 +117,13 @@
           "happy"
         ],
         "generation": 0,
-        "descendants": 11,
-        "size": 13.9498743710662,
+        "descendants": 18,
+        "size": 16.727922061357855,
         "color": "#a16207",
         "source": "curated",
         "confidence": "curated",
-        "x": -2.3864669799804688,
-        "y": 35.400089263916016
+        "x": -16.420272827148438,
+        "y": 38.8246955871582
       }
     },
     {
@@ -142,8 +142,8 @@
         "color": "#a16207",
         "source": "curated",
         "confidence": "curated",
-        "x": -30.475215911865234,
-        "y": -2.66750431060791
+        "x": -33.24956130981445,
+        "y": -13.27947998046875
       }
     },
     {
@@ -162,8 +162,8 @@
         "color": "#a16207",
         "source": "curated",
         "confidence": "curated",
-        "x": -25.19196891784668,
-        "y": -30.664060592651367
+        "x": -28.570709228515625,
+        "y": -34.124542236328125
       }
     },
     {
@@ -181,8 +181,8 @@
         "color": "#a16207",
         "source": "curated",
         "confidence": "curated",
-        "x": -31.855318069458008,
-        "y": -10.755484580993652
+        "x": -32.76371765136719,
+        "y": -0.5387357473373413
       }
     },
     {
@@ -201,8 +201,8 @@
         "color": "#a16207",
         "source": "curated",
         "confidence": "curated",
-        "x": -32.39350509643555,
-        "y": 19.446319580078125
+        "x": -33.87978744506836,
+        "y": 25.776391983032227
       }
     },
     {
@@ -216,13 +216,13 @@
           "euphoric"
         ],
         "generation": 0,
-        "descendants": 12,
-        "size": 14.392304845413264,
+        "descendants": 19,
+        "size": 17.076696830622023,
         "color": "#a16207",
         "source": "curated",
         "confidence": "curated",
-        "x": 3.5101280212402344,
-        "y": -37.482025146484375
+        "x": 1.986095905303955,
+        "y": -33.873268127441406
       }
     },
     {
@@ -241,8 +241,8 @@
         "color": "#a16207",
         "source": "curated",
         "confidence": "curated",
-        "x": -41.259422302246094,
-        "y": -2.731325149536133
+        "x": -45.65092849731445,
+        "y": 3.6258223056793213
       }
     },
     {
@@ -257,13 +257,13 @@
         ],
         "note": "Origin debated; commonly traced to Thai/Nepalese bagseed.",
         "generation": 1,
-        "descendants": 11,
-        "size": 13.9498743710662,
+        "descendants": 18,
+        "size": 16.727922061357855,
         "color": "#f59e0b",
         "source": "curated",
         "confidence": "curated",
-        "x": 12.089550971984863,
-        "y": -11.117215156555176
+        "x": 14.854799270629883,
+        "y": -2.697920083999634
       }
     },
     {
@@ -278,13 +278,13 @@
         ],
         "note": "Clone-only; precise origin unverified.",
         "generation": 0,
-        "descendants": 2,
-        "size": 8.242640687119286,
+        "descendants": 6,
+        "size": 11.348469228349533,
         "color": "#8b5cf6",
         "source": "curated",
         "confidence": "curated",
-        "x": 11.290338516235352,
-        "y": -36.18839645385742
+        "x": 10.023648262023926,
+        "y": -16.170480728149414
       }
     },
     {
@@ -298,13 +298,13 @@
           "euphoric"
         ],
         "generation": 0,
-        "descendants": 2,
-        "size": 8.242640687119286,
+        "descendants": 3,
+        "size": 9.196152422706632,
         "color": "#f59e0b",
         "source": "curated",
         "confidence": "curated",
-        "x": 28.301422119140625,
-        "y": -26.30968475341797
+        "x": 22.49302864074707,
+        "y": -23.709802627563477
       }
     },
     {
@@ -318,13 +318,13 @@
           "euphoric"
         ],
         "generation": 0,
-        "descendants": 2,
-        "size": 8.242640687119286,
+        "descendants": 8,
+        "size": 12.485281374238571,
         "color": "#f59e0b",
         "source": "curated",
         "confidence": "curated",
-        "x": 17.290367126464844,
-        "y": 30.099496841430664
+        "x": 11.523750305175781,
+        "y": 41.5755729675293
       }
     },
     {
@@ -338,13 +338,13 @@
           "uplifted"
         ],
         "generation": 1,
-        "descendants": 10,
-        "size": 13.486832980505138,
+        "descendants": 14,
+        "size": 15.224972160321824,
         "color": "#f59e0b",
         "source": "curated",
         "confidence": "curated",
-        "x": -8.097062110900879,
-        "y": 22.571012496948242
+        "x": -16.055021286010742,
+        "y": 20.94116973876953
       }
     },
     {
@@ -358,13 +358,13 @@
           "happy"
         ],
         "generation": 1,
-        "descendants": 5,
-        "size": 10.70820393249937,
+        "descendants": 9,
+        "size": 13,
         "color": "#8b5cf6",
         "source": "curated",
         "confidence": "curated",
-        "x": 3.0957388877868652,
-        "y": 16.802963256835938
+        "x": -1.2638027667999268,
+        "y": 18.30278778076172
       }
     },
     {
@@ -383,8 +383,8 @@
         "color": "#22c55e",
         "source": "curated",
         "confidence": "curated",
-        "x": -11.117257118225098,
-        "y": -17.65041732788086
+        "x": -25.479251861572266,
+        "y": -19.30875587463379
       }
     },
     {
@@ -403,8 +403,8 @@
         "color": "#f59e0b",
         "source": "curated",
         "confidence": "curated",
-        "x": 8.91441822052002,
-        "y": 6.493140697479248
+        "x": -3.605682849884033,
+        "y": 4.729363918304443
       }
     },
     {
@@ -423,8 +423,8 @@
         "color": "#8b5cf6",
         "source": "curated",
         "confidence": "curated",
-        "x": 5.436583995819092,
-        "y": 27.6966609954834
+        "x": -8.13869857788086,
+        "y": 29.91312026977539
       }
     },
     {
@@ -438,13 +438,13 @@
           "sleepy"
         ],
         "generation": 2,
-        "descendants": 2,
-        "size": 8.242640687119286,
+        "descendants": 6,
+        "size": 11.348469228349533,
         "color": "#8b5cf6",
         "source": "curated",
         "confidence": "curated",
-        "x": 4.806039810180664,
-        "y": -1.6272271871566772
+        "x": 3.187997341156006,
+        "y": -2.5295679569244385
       }
     },
     {
@@ -459,13 +459,13 @@
         ],
         "note": "Lineage contested; commonly Chemdawg x Hindu Kush.",
         "generation": 2,
-        "descendants": 9,
-        "size": 13,
+        "descendants": 16,
+        "size": 16,
         "color": "#f59e0b",
         "source": "curated",
         "confidence": "curated",
-        "x": 16.457109451293945,
-        "y": 16.415061950683594
+        "x": 11.329298973083496,
+        "y": 29.69111442565918
       }
     },
     {
@@ -484,8 +484,8 @@
         "color": "#22c55e",
         "source": "curated",
         "confidence": "curated",
-        "x": 20.949831008911133,
-        "y": -10.161798477172852
+        "x": 10.38139533996582,
+        "y": 10.122634887695312
       }
     },
     {
@@ -505,8 +505,8 @@
         "color": "#8b5cf6",
         "source": "curated",
         "confidence": "curated",
-        "x": 18.82964324951172,
-        "y": 6.6640944480896
+        "x": 3.2322566509246826,
+        "y": 39.57484436035156
       }
     },
     {
@@ -525,8 +525,8 @@
         "color": "#8b5cf6",
         "source": "curated",
         "confidence": "curated",
-        "x": -18.509370803833008,
-        "y": 33.26725387573242
+        "x": -26.37725830078125,
+        "y": 34.02383041381836
       }
     },
     {
@@ -541,13 +541,13 @@
         ],
         "note": "Florida OG Kush phenotype.",
         "generation": 3,
-        "descendants": 1,
-        "size": 7,
+        "descendants": 2,
+        "size": 8.242640687119286,
         "color": "#f59e0b",
         "source": "curated",
         "confidence": "curated",
-        "x": 23.44679832458496,
-        "y": 26.061412811279297
+        "x": 30.15163230895996,
+        "y": 28.951725006103516
       }
     },
     {
@@ -566,8 +566,8 @@
         "color": "#8b5cf6",
         "source": "curated",
         "confidence": "curated",
-        "x": -13.412991523742676,
-        "y": -29.71600914001465
+        "x": -20.38461685180664,
+        "y": -30.754783630371094
       }
     },
     {
@@ -586,8 +586,8 @@
         "color": "#f59e0b",
         "source": "curated",
         "confidence": "curated",
-        "x": -4.658787250518799,
-        "y": -32.73087692260742
+        "x": -11.478863716125488,
+        "y": -34.06721496582031
       }
     },
     {
@@ -601,13 +601,13 @@
           "happy"
         ],
         "generation": 3,
-        "descendants": 1,
-        "size": 7,
+        "descendants": 5,
+        "size": 10.70820393249937,
         "color": "#8b5cf6",
         "source": "curated",
         "confidence": "curated",
-        "x": 10.77109146118164,
-        "y": -22.25359344482422
+        "x": 3.869023561477661,
+        "y": -24.86070442199707
       }
     },
     {
@@ -626,8 +626,8 @@
         "color": "#f59e0b",
         "source": "curated",
         "confidence": "curated",
-        "x": 18.351285934448242,
-        "y": -30.238744735717773
+        "x": 10.071051597595215,
+        "y": -37.893009185791016
       }
     },
     {
@@ -641,13 +641,13 @@
           "relaxed"
         ],
         "generation": 3,
-        "descendants": 5,
-        "size": 10.70820393249937,
+        "descendants": 12,
+        "size": 14.392304845413264,
         "color": "#f59e0b",
         "source": "curated",
         "confidence": "curated",
-        "x": 34.08946228027344,
-        "y": 0.4953469932079315
+        "x": 20.57565689086914,
+        "y": 9.35705852508545
       }
     },
     {
@@ -662,13 +662,13 @@
         ],
         "note": "Phenotype of Girl Scout Cookies.",
         "generation": 4,
-        "descendants": 1,
-        "size": 7,
+        "descendants": 7,
+        "size": 11.937253933193773,
         "color": "#f59e0b",
         "source": "curated",
         "confidence": "curated",
-        "x": 35.60031509399414,
-        "y": 18.07478141784668
+        "x": 37.594627380371094,
+        "y": 22.24739646911621
       }
     },
     {
@@ -682,13 +682,13 @@
           "uplifted"
         ],
         "generation": 4,
-        "descendants": 1,
-        "size": 7,
+        "descendants": 7,
+        "size": 11.937253933193773,
         "color": "#f59e0b",
         "source": "curated",
         "confidence": "curated",
-        "x": 27.793970108032227,
-        "y": 19.08696937561035
+        "x": 24.155014038085938,
+        "y": 23.81377410888672
       }
     },
     {
@@ -702,13 +702,13 @@
           "happy"
         ],
         "generation": 5,
-        "descendants": 0,
-        "size": 4,
+        "descendants": 6,
+        "size": 11.348469228349533,
         "color": "#f59e0b",
         "source": "curated",
         "confidence": "curated",
-        "x": 36.99071502685547,
-        "y": 11.351298332214355
+        "x": 30.67138671875,
+        "y": 1.5800886154174805
       }
     },
     {
@@ -722,13 +722,13 @@
           "euphoric"
         ],
         "generation": 4,
-        "descendants": 1,
-        "size": 7,
+        "descendants": 2,
+        "size": 8.242640687119286,
         "color": "#f59e0b",
         "source": "curated",
         "confidence": "curated",
-        "x": 32.48930740356445,
-        "y": -11.64864730834961
+        "x": 25.670604705810547,
+        "y": -6.574685096740723
       }
     },
     {
@@ -742,13 +742,13 @@
           "euphoric"
         ],
         "generation": 5,
-        "descendants": 0,
-        "size": 4,
+        "descendants": 1,
+        "size": 7,
         "color": "#8b5cf6",
         "source": "curated",
         "confidence": "curated",
-        "x": 26.73895263671875,
-        "y": 7.601052761077881
+        "x": 30.181640625,
+        "y": 13.667694091796875
       }
     },
     {
@@ -767,8 +767,8 @@
         "color": "#22c55e",
         "source": "curated",
         "confidence": "curated",
-        "x": -4.095473289489746,
-        "y": 7.346656799316406
+        "x": -14.68134880065918,
+        "y": 7.3335418701171875
       }
     },
     {
@@ -787,8 +787,8 @@
         "color": "#f59e0b",
         "source": "curated",
         "confidence": "curated",
-        "x": -36.529518127441406,
-        "y": 4.971222400665283
+        "x": -39.42335510253906,
+        "y": 12.606273651123047
       }
     },
     {
@@ -807,8 +807,8 @@
         "color": "#f59e0b",
         "source": "curated",
         "confidence": "curated",
-        "x": -25.875398635864258,
-        "y": -16.872737884521484
+        "x": -14.2384672164917,
+        "y": -21.103031158447266
       }
     },
     {
@@ -827,8 +827,8 @@
         "color": "#22c55e",
         "source": "curated",
         "confidence": "curated",
-        "x": -23.20059585571289,
-        "y": 12.774487495422363
+        "x": -25.866636276245117,
+        "y": 6.846936225891113
       }
     },
     {
@@ -847,8 +847,8 @@
         "color": "#f59e0b",
         "source": "curated",
         "confidence": "curated",
-        "x": -24.652301788330078,
-        "y": 23.557720184326172
+        "x": -30.154537200927734,
+        "y": 16.85324478149414
       }
     },
     {
@@ -867,8 +867,8 @@
         "color": "#22c55e",
         "source": "curated",
         "confidence": "curated",
-        "x": 0.3711419403553009,
-        "y": -25.0278377532959
+        "x": -8.167414665222168,
+        "y": -26.091827392578125
       }
     },
     {
@@ -888,8 +888,8 @@
         "color": "#22c55e",
         "source": "curated",
         "confidence": "curated",
-        "x": 3.2150416374206543,
-        "y": 35.92774963378906
+        "x": -6.191880702972412,
+        "y": 37.431453704833984
       }
     },
     {
@@ -908,8 +908,163 @@
         "color": "#f59e0b",
         "source": "curated",
         "confidence": "curated",
-        "x": 21.391857147216797,
-        "y": -0.2728607654571533
+        "x": 13.513671875,
+        "y": 20.488615036010742
+      }
+    },
+    {
+      "key": "zkittlez",
+      "attributes": {
+        "label": "Zkittlez",
+        "strainType": "indica",
+        "effects": [
+          "relaxed",
+          "happy",
+          "sleepy"
+        ],
+        "generation": 4,
+        "descendants": 3,
+        "size": 9.196152422706632,
+        "color": "#8b5cf6",
+        "source": "expanded-demo",
+        "confidence": "documented",
+        "x": 19.074813842773438,
+        "y": -32.93783187866211
+      }
+    },
+    {
+      "key": "runtz",
+      "attributes": {
+        "label": "Runtz",
+        "strainType": "hybrid",
+        "effects": [],
+        "generation": 6,
+        "descendants": 2,
+        "size": 8.242640687119286,
+        "color": "#f59e0b",
+        "source": "expanded-demo",
+        "confidence": "documented",
+        "x": 27.284486770629883,
+        "y": -17.65908432006836
+      }
+    },
+    {
+      "key": "white-runtz",
+      "attributes": {
+        "label": "White Runtz",
+        "strainType": "hybrid",
+        "effects": [
+          "euphoric",
+          "relaxed",
+          "happy"
+        ],
+        "generation": 7,
+        "descendants": 0,
+        "size": 4,
+        "color": "#f59e0b",
+        "source": "expanded-demo",
+        "confidence": "documented",
+        "x": 28.77798843383789,
+        "y": -28.891508102416992
+      }
+    },
+    {
+      "key": "gushers",
+      "attributes": {
+        "label": "Gushers",
+        "strainType": "hybrid",
+        "effects": [
+          "relaxed",
+          "happy",
+          "euphoric"
+        ],
+        "generation": 6,
+        "descendants": 0,
+        "size": 4,
+        "color": "#f59e0b",
+        "source": "expanded-demo",
+        "confidence": "documented",
+        "x": 41.942176818847656,
+        "y": 11.661273956298828
+      }
+    },
+    {
+      "key": "biscotti",
+      "attributes": {
+        "label": "Biscotti",
+        "strainType": "indica",
+        "effects": [
+          "relaxed",
+          "euphoric"
+        ],
+        "generation": 6,
+        "descendants": 0,
+        "size": 4,
+        "color": "#8b5cf6",
+        "source": "expanded-demo",
+        "confidence": "documented",
+        "x": 41.849761962890625,
+        "y": -3.4372355937957764
+      }
+    },
+    {
+      "key": "jealousy",
+      "attributes": {
+        "label": "Jealousy",
+        "strainType": "hybrid",
+        "effects": [
+          "euphoric",
+          "relaxed",
+          "focused"
+        ],
+        "generation": 6,
+        "descendants": 0,
+        "size": 4,
+        "color": "#f59e0b",
+        "source": "expanded-demo",
+        "confidence": "documented",
+        "x": 36.97975540161133,
+        "y": -10.56350326538086
+      }
+    },
+    {
+      "key": "wedding-crasher",
+      "attributes": {
+        "label": "Wedding Crasher",
+        "strainType": "hybrid",
+        "effects": [
+          "happy",
+          "uplifted",
+          "euphoric"
+        ],
+        "generation": 6,
+        "descendants": 0,
+        "size": 4,
+        "color": "#f59e0b",
+        "source": "expanded-demo",
+        "confidence": "documented",
+        "x": 39.11435317993164,
+        "y": 7.263162136077881
+      }
+    },
+    {
+      "key": "gary-payton",
+      "attributes": {
+        "label": "Gary Payton",
+        "strainType": "hybrid",
+        "effects": [
+          "uplifted",
+          "focused",
+          "euphoric"
+        ],
+        "generation": 7,
+        "descendants": 0,
+        "size": 4,
+        "color": "#f59e0b",
+        "source": "expanded-demo",
+        "confidence": "documented",
+        "x": 37.10005569458008,
+        "y": -19.367862701416016
       }
     }
   ],
@@ -1558,6 +1713,96 @@
       "key": "sour-diesel->headband",
       "source": "sour-diesel",
       "target": "headband",
+      "attributes": {
+        "size": 1.5,
+        "color": "#374151",
+        "type": "arrow"
+      }
+    },
+    {
+      "key": "granddaddy-purple->zkittlez",
+      "source": "granddaddy-purple",
+      "target": "zkittlez",
+      "attributes": {
+        "size": 1.5,
+        "color": "#374151",
+        "type": "arrow"
+      }
+    },
+    {
+      "key": "gelato->runtz",
+      "source": "gelato",
+      "target": "runtz",
+      "attributes": {
+        "size": 1.5,
+        "color": "#374151",
+        "type": "arrow"
+      }
+    },
+    {
+      "key": "zkittlez->runtz",
+      "source": "zkittlez",
+      "target": "runtz",
+      "attributes": {
+        "size": 1.5,
+        "color": "#374151",
+        "type": "arrow"
+      }
+    },
+    {
+      "key": "runtz->white-runtz",
+      "source": "runtz",
+      "target": "white-runtz",
+      "attributes": {
+        "size": 1.5,
+        "color": "#374151",
+        "type": "arrow"
+      }
+    },
+    {
+      "key": "gelato->gushers",
+      "source": "gelato",
+      "target": "gushers",
+      "attributes": {
+        "size": 1.5,
+        "color": "#374151",
+        "type": "arrow"
+      }
+    },
+    {
+      "key": "gelato->biscotti",
+      "source": "gelato",
+      "target": "biscotti",
+      "attributes": {
+        "size": 1.5,
+        "color": "#374151",
+        "type": "arrow"
+      }
+    },
+    {
+      "key": "gelato->jealousy",
+      "source": "gelato",
+      "target": "jealousy",
+      "attributes": {
+        "size": 1.5,
+        "color": "#374151",
+        "type": "arrow"
+      }
+    },
+    {
+      "key": "wedding-cake->wedding-crasher",
+      "source": "wedding-cake",
+      "target": "wedding-crasher",
+      "attributes": {
+        "size": 1.5,
+        "color": "#374151",
+        "type": "arrow"
+      }
+    },
+    {
+      "key": "runtz->gary-payton",
+      "source": "runtz",
+      "target": "gary-payton",
       "attributes": {
         "size": 1.5,
         "color": "#374151",

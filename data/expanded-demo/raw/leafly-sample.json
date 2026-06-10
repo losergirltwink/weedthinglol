@@ -1,0 +1,16 @@
+[
+  { "slug": "gelato", "name": "Gelato", "category": "Sativa", "effects": ["Happy"], "parents": [] },
+  { "slug": "granddaddy-purple", "name": "Granddaddy Purple", "category": "Hybrid", "effects": ["Sleepy", "Relaxed"], "parents": [] },
+  { "slug": "wedding-cake", "name": "Wedding Cake", "category": "Hybrid", "effects": ["Relaxed"], "parents": [] },
+
+  { "slug": "zkittlez", "name": "Zkittlez", "category": "Indica", "effects": ["Relaxed", "Happy", "Sleepy"], "parents": ["granddaddy-purple"] },
+  { "slug": "runtz", "name": "Runtz", "category": "Hybrid", "effects": [], "parents": ["gelato", "zkittlez"] },
+  { "slug": "white-runtz", "name": "White Runtz", "category": "Hybrid", "effects": ["Euphoric", "Relaxed", "Happy"], "parents": ["runtz"] },
+  { "slug": "gushers", "name": "Gushers", "category": "Hybrid", "effects": ["Relaxed", "Happy", "Euphoric"], "parents": ["gelato", "og-kush"] },
+  { "slug": "biscotti", "name": "Biscotti", "category": "Indica", "effects": ["Relaxed", "Euphoric"], "parents": ["gelato"] },
+  { "slug": "jealousy", "name": "Jealousy", "category": "Hybrid", "effects": ["Euphoric", "Relaxed", "Focused"], "parents": ["gelato"] },
+  { "slug": "wedding-crasher", "name": "Wedding Crasher", "category": "Hybrid", "effects": ["Happy", "Uplifted", "Euphoric"], "parents": ["wedding-cake"] },
+  { "slug": "gary-payton", "name": "Gary Payton", "category": "Hybrid", "effects": [], "parents": ["runtz"] },
+
+  { "slug": "test-strain-001", "name": "Unknown Import 001", "category": "Unknown", "effects": [], "parents": ["nonexistent-parent"] }
+]

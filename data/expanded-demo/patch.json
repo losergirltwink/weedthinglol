@@ -1,0 +1,11 @@
+{
+  "_comment": "Hand massaging layered OVER raw/ — never edit the raw scrape in place. The adapter (scripts/adapters/leafly.ts) applies these in order: dropStrains, dropEdges, overrideStrains, addStrains, addEdges. This file is the reviewable diff that turns a messy scrape into something usable.",
+
+  "dropStrains": ["test-strain-001"],
+
+  "dropEdges": [{ "parent": "og-kush", "child": "gushers" }],
+
+  "overrideStrains": [
+    { "id": "gary-payton", "effects": ["uplifted", "focused", "euphoric"] }
+  ]
+}
