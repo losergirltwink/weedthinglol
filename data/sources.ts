@@ -29,11 +29,26 @@ export const SOURCES: SourceDef[] = [
   { id: "curated", label: "Curated", confidence: "curated", dir: "curated" },
 ];
 
-/** The union pseudo-source: merge of SOURCES, provenance-tagged. Built step 3. */
+/** The union pseudo-source: merge of SOURCES, provenance-tagged. */
 export const ALL_SOURCE = { id: "all", label: "All sources" } as const;
 
 /** Source the explorer loads on first paint. */
 export const DEFAULT_SOURCE = "curated";
+
+/** A selectable entry in the source dropdown. */
+export interface SourceOption {
+  id: string;
+  label: string;
+}
+
+/**
+ * Sources offered to the UI: every real source, plus the `all` union — but only
+ * once there's more than one real source, since a union of one is redundant.
+ */
+export const AVAILABLE_SOURCES: readonly SourceOption[] = [
+  ...SOURCES.map(({ id, label }) => ({ id, label })),
+  ...(SOURCES.length > 1 ? [{ id: ALL_SOURCE.id, label: ALL_SOURCE.label }] : []),
+];
 
 /** Look up a source definition by id. */
 export const sourceById = (id: string): SourceDef | undefined =>

@@ -20,7 +20,7 @@ import forceAtlas2 from "graphology-layout-forceatlas2";
 
 import type { Strain, Lineage, Confidence } from "../app/lib/strains";
 import { TYPE_COLORS } from "../app/lib/strains";
-import { SOURCES, ALL_SOURCE, DEFAULT_SOURCE, type SourceDef } from "../data/sources";
+import { SOURCES, ALL_SOURCE, type SourceDef } from "../data/sources";
 import { adapterFor } from "./adapters";
 
 const ROOT = process.cwd();
@@ -257,7 +257,6 @@ function emit(
   strains: Strain[],
   lineage: Lineage[],
   provenanceFor: (id: string) => Provenance,
-  { alsoBare = false }: { alsoBare?: boolean } = {},
 ): void {
   const { graph, errors, maxGen } = compile(strains, lineage, provenanceFor);
 
@@ -269,9 +268,6 @@ function emit(
 
   const serialized = JSON.stringify(graph.export(), null, 2);
   writeFileSync(resolve(ROOT, `public/graph.${outId}.json`), serialized);
-  // Back-compat: the client still fetches /graph.json until step 4 flips it to
-  // the per-source path. Mirror the default source there for now.
-  if (alsoBare) writeFileSync(resolve(ROOT, "public/graph.json"), serialized);
   console.log(
     `✓ graph.${outId}.json — ${graph.order} strains, ${graph.size} lineage edges, max depth ${maxGen}.`,
   );
@@ -280,9 +276,7 @@ function emit(
 // Per-source builds (uniform provenance — every node is from this source).
 for (const source of SOURCES) {
   const { strains, lineage } = adapterFor(source.id).load();
-  emit(source.id, strains, lineage, () => ({ source: source.id, confidence: source.confidence }), {
-    alsoBare: source.id === DEFAULT_SOURCE,
-  });
+  emit(source.id, strains, lineage, () => ({ source: source.id, confidence: source.confidence }));
 }
 
 // Union build (per-node provenance from the merge; validated again, incl. cycles).

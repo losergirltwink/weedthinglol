@@ -15,10 +15,17 @@ import type { SerializedGraph } from "graphology-types";
 
 import { STRAIN_TYPES, type StrainNodeAttributes, type StrainType } from "./strains";
 import { computeFamily, type StrainGraphType } from "./graph-utils";
+import { AVAILABLE_SOURCES, DEFAULT_SOURCE, type SourceOption } from "@/data/sources";
 
 export interface StrainExplorer {
-  /** Loaded graph, or null until the fetch resolves. */
+  /** Loaded graph, or null while the active source's graph is fetching. */
   graph: StrainGraphType | null;
+  /** Active data source id; selects which public/graph.<source>.json loads. */
+  source: string;
+  /** Switch source — refetches the graph and clears selection/recommendations. */
+  setSource: (id: string) => void;
+  /** Sources offered to the dropdown (real sources + `all` when >1 exists). */
+  availableSources: readonly SourceOption[];
   selectedId: string | null;
   setSelectedId: (id: string | null) => void;
   activeTypes: Set<StrainType>;
@@ -34,16 +41,19 @@ export interface StrainExplorer {
 
 export function useStrainExplorer(): StrainExplorer {
   const [graph, setGraph] = useState<StrainGraphType | null>(null);
+  const [source, setSourceState] = useState<string>(DEFAULT_SOURCE);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [activeTypes, setActiveTypes] = useState<Set<StrainType>>(
     () => new Set(STRAIN_TYPES),
   );
   const [recommendedSet, setRecommendedSet] = useState<Set<string> | null>(null);
 
+  // Refetch whenever the source changes. setSource nulls the graph first (the
+  // loading state), so the renderer remounts cleanly on the new node set.
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const res = await fetch("/graph.json");
+      const res = await fetch(`/graph.${source}.json`);
       const data = (await res.json()) as SerializedGraph<StrainNodeAttributes>;
       if (cancelled) return;
       const g = new DirectedGraph<StrainNodeAttributes>();
@@ -53,7 +63,21 @@ export function useStrainExplorer(): StrainExplorer {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [source]);
+
+  // Switching source invalidates the loaded graph and the current
+  // selection/recommendations (their ids may not exist in the new graph). Reset
+  // them here in the event handler; the effect above then refetches.
+  const setSource = useCallback(
+    (id: string) => {
+      if (id === source) return;
+      setGraph(null);
+      setSourceState(id);
+      setSelectedId(null);
+      setRecommendedSet(null);
+    },
+    [source],
+  );
 
   const focusSet = useMemo(
     () => (graph && selectedId ? computeFamily(graph, selectedId) : null),
@@ -80,6 +104,9 @@ export function useStrainExplorer(): StrainExplorer {
 
   return {
     graph,
+    source,
+    setSource,
+    availableSources: AVAILABLE_SOURCES,
     selectedId,
     setSelectedId,
     activeTypes,

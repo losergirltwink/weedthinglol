@@ -1,6 +1,6 @@
 // Shared types + constants for the strain graph.
-// The curated source data lives in /data/*.json; the build script
-// (scripts/build-graph.ts) compiles it into public/graph.json.
+// Source data lives in /data/<source>/*.json (see data/sources.ts); the build
+// script (scripts/build-graph.ts) compiles each into public/graph.<source>.json.
 
 export type StrainType = "indica" | "sativa" | "hybrid" | "landrace";
 
@@ -26,7 +26,7 @@ export interface Lineage {
   child: string;
 }
 
-/** Node attributes baked into graph.json by the build script. */
+/** Node attributes baked into public/graph.<source>.json by the build script. */
 export interface StrainNodeAttributes {
   label: string;
   // Stored as `strainType` (not `type`) because Sigma reserves the node
@@ -40,6 +40,10 @@ export interface StrainNodeAttributes {
   y: number;
   size: number;
   color: string;
+  // Provenance (Phase 4): the source this node came from and its trust tier.
+  // In a per-source graph these are uniform; in the `all` union they vary.
+  source: string;
+  confidence: Confidence;
 }
 
 export const TYPE_COLORS: Record<StrainType, string> = {
