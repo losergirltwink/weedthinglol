@@ -137,9 +137,9 @@ messages) for the full arc.
 Phase 4 follow-ups: the **`crowd` tier is live** — `kushy` (a ~9.5k-strain
 community CSV scrape) compiles to a 1.2k-node connected lineage graph via
 name-mining + identity de-dup; it replaced the old `expanded-demo` sample. The **provenance legend** is also
-done (`ProvenanceLegend`, see above). Still open: mount `SourcePanel` in the 3D
-view (deliberate 3D checkpoint item — switching already works there via the
-shared hook, just no UI); graduated per-tier dimming (the current resting-dim is
-binary curated-vs-rest — fine for two tiers, worth revisiting if a middle
+done (`ProvenanceLegend`, see above). The 3D view now mounts `SourcePanel` too
+(deliberate 3D checkpoint sync — source switching already worked via the shared
+hook; this added the dropdown UI). Still open: graduated per-tier dimming (the
+current resting-dim is binary curated-vs-rest — fine for two tiers, worth revisiting if a middle
 `documented` tier returns); a higher-fidelity `documented`-tier source (kushy's
 `crosses` column is sparse; the seam is proven if a better dump appears).

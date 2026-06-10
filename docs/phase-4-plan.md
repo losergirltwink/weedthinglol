@@ -164,5 +164,6 @@ Update the one fetch site (`useStrainExplorer`) accordingly.
   seam it will plug into.
 - The `full`/crowd tier dataset.
 - Per-source color theming / a provenance legend toggle beyond v1 dimming.
-- 3D `SourcePanel` mount (next 3D checkpoint).
+- ~~3D `SourcePanel` mount (next 3D checkpoint).~~ Done — 3D now mounts the same
+  `SourcePanel` in its right column (provenance legend + resting-dim remain 2D-only).
 ```
