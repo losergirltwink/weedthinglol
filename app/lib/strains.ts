@@ -41,3 +41,6 @@ export const TYPE_COLORS: Record<StrainType, string> = {
   hybrid: "#f59e0b", // amber
   landrace: "#a16207", // brown
 };
+
+/** Display order for the legend / filters. */
+export const STRAIN_TYPES: StrainType[] = ["landrace", "sativa", "hybrid", "indica"];
