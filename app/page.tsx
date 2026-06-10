@@ -14,7 +14,7 @@ export default function Home() {
           🌿 Strain Genealogy
         </h1>
         <p className="mt-1 text-sm text-zinc-400">
-          Click a strain to trace its lineage · hover to peek · search & filter.
+          Click a strain to trace its lineage & find similar · or match by effect.
         </p>
       </div>
     </main>

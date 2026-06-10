@@ -13,6 +13,7 @@ import { GraphController } from "./graph/GraphController";
 import { SearchPanel } from "./graph/SearchPanel";
 import { FilterLegend } from "./graph/FilterLegend";
 import { DetailPanel } from "./graph/DetailPanel";
+import { RecommendPanel } from "./graph/RecommendPanel";
 import { drawHover } from "./graph/drawHover";
 
 const SIGMA_SETTINGS = {
@@ -37,6 +38,7 @@ export default function StrainGraph() {
   const [activeTypes, setActiveTypes] = useState<Set<StrainType>>(
     () => new Set(STRAIN_TYPES),
   );
+  const [recommendedSet, setRecommendedSet] = useState<Set<string> | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -57,6 +59,10 @@ export default function StrainGraph() {
     () => (graph && selectedId ? computeFamily(graph, selectedId) : null),
     [graph, selectedId],
   );
+
+  const handleRecommendations = useCallback((ids: Set<string>) => {
+    setRecommendedSet(ids.size ? ids : null);
+  }, []);
 
   const toggleType = useCallback((type: StrainType) => {
     setActiveTypes((prev) => {
@@ -86,13 +92,14 @@ export default function StrainGraph() {
           graph={graph}
           selectedId={selectedId}
           focusSet={focusSet}
+          highlightSet={recommendedSet}
           activeTypes={activeTypes}
           onSelect={setSelectedId}
         />
       </SigmaContainer>
 
-      {/* Right column: search + detail */}
-      <div className="absolute right-6 top-6 flex w-72 flex-col gap-3">
+      {/* Right column: search + detail + recommendations */}
+      <div className="absolute right-6 top-6 flex max-h-[calc(100%-3rem)] w-72 flex-col gap-3 overflow-y-auto">
         <SearchPanel graph={graph} onSelect={setSelectedId} />
         {selectedId && (
           <DetailPanel
@@ -102,6 +109,12 @@ export default function StrainGraph() {
             onClose={() => setSelectedId(null)}
           />
         )}
+        <RecommendPanel
+          graph={graph}
+          selectedId={selectedId}
+          onSelect={setSelectedId}
+          onRecommendations={handleRecommendations}
+        />
       </div>
 
       {/* Bottom-left: interactive legend / filters */}

@@ -20,6 +20,8 @@ interface Props {
   selectedId: string | null;
   /** Family line of the selected node (ancestors + self + descendants), or null. */
   focusSet: Set<string> | null;
+  /** Recommended strains to keep lit alongside the family line, or null. */
+  highlightSet: Set<string> | null;
   activeTypes: Set<StrainType>;
   onSelect: (id: string | null) => void;
 }
@@ -28,6 +30,7 @@ export function GraphController({
   graph,
   selectedId,
   focusSet,
+  highlightSet,
   activeTypes,
   onSelect,
 }: Props) {
@@ -63,14 +66,20 @@ export function GraphController({
     );
   }, [sigma, selectedId]);
 
-  // Recompute reducers whenever selection / hover / filters change.
+  // Recompute reducers whenever selection / hover / filters / recs change.
   useEffect(() => {
     const hoverSet = hovered
       ? new Set<string>([hovered, ...graph.neighbors(hovered)])
       : null;
 
+    // The lit set: selected strain's family line ∪ recommended strains.
+    const relevantSet =
+      focusSet || highlightSet
+        ? new Set<string>([...(focusSet ?? []), ...(highlightSet ?? [])])
+        : null;
+
     const isDimmed = (node: string) =>
-      (focusSet !== null && !focusSet.has(node)) ||
+      (relevantSet !== null && !relevantSet.has(node)) ||
       (hoverSet !== null && !hoverSet.has(node));
 
     setSettings({
@@ -81,10 +90,11 @@ export function GraphController({
         if (isDimmed(node)) {
           return { ...data, color: DIM_NODE, label: "", zIndex: 0 };
         }
-        const emphasized = focusSet !== null || hoverSet !== null;
+        const emphasized = relevantSet !== null || hoverSet !== null;
+        const isRecommended = highlightSet?.has(node) ?? false;
         return {
           ...data,
-          zIndex: node === selectedId ? 2 : 1,
+          zIndex: node === selectedId ? 3 : isRecommended ? 2 : 1,
           forceLabel: emphasized || undefined,
           highlighted: node === selectedId,
         };
@@ -99,10 +109,11 @@ export function GraphController({
         if (!endpointsActive) return { ...data, hidden: true };
 
         const inFocus =
-          (focusSet === null || (focusSet.has(source) && focusSet.has(target))) &&
+          (relevantSet === null ||
+            (relevantSet.has(source) && relevantSet.has(target))) &&
           (hoverSet === null || (hoverSet.has(source) && hoverSet.has(target)));
 
-        if ((focusSet !== null || hoverSet !== null) && !inFocus) {
+        if ((relevantSet !== null || hoverSet !== null) && !inFocus) {
           return { ...data, color: DIM_EDGE, zIndex: 0 };
         }
         return { ...data, color: FOCUS_EDGE, zIndex: 1 };
@@ -110,7 +121,16 @@ export function GraphController({
     });
 
     sigma.refresh();
-  }, [setSettings, sigma, graph, selectedId, focusSet, activeTypes, hovered]);
+  }, [
+    setSettings,
+    sigma,
+    graph,
+    selectedId,
+    focusSet,
+    highlightSet,
+    activeTypes,
+    hovered,
+  ]);
 
   return null;
 }
