@@ -16,10 +16,11 @@ target a strain they'll like via effect + lineage similarity.
 - **2D renderer (primary):** Sigma.js 3 + @react-sigma/core over **Graphology**
   (DirectedGraph). WebGL.
 - **3D renderer (experimental):** react-force-graph-3d (Three.js + d3-force-3d).
-- **Layout:** ForceAtlas2 baked **offline** into `public/graph.json`; the 2D
-  browser does zero layout. (The 3D view lays out live in-browser.)
-- **Data:** hand-curated static JSON, compiled to a single graph file. No
-  backend, no DB. All state is transient client state.
+- **Layout:** ForceAtlas2 baked **offline** into `public/graph.<source>.json`;
+  the 2D browser does zero layout. (The 3D view lays out live in-browser.)
+- **Data:** multiple static-JSON **sources** on a confidence gradient (see
+  *Multi-source* below), each compiled to its own baked graph file. No backend,
+  no DB. All state is transient client state.
 
 ## Package manager: pnpm
 
@@ -34,34 +35,66 @@ npm.** Native build deps (sharp, unrs-resolver, esbuild) must stay `true` under
   `.next/dev/logs/next-development.log` — useful since the renderers are
   client-only and won't surface via `curl`.
 - `pnpm build` — production build / typecheck.
-- `pnpm build:graph` — **regenerate `public/graph.json` from `data/*.json`.** Run
-  this after any data edit.
+- `pnpm build:graph` — **regenerate every `public/graph.<source>.json` (+ the
+  `all` union) from `data/<source>/`.** Run this after any data edit.
 - `pnpm exec tsc --noEmit` — typecheck. There is no headless browser here, so
   verify via tsc + eslint + the dev log, not a real render.
 
 ## Data workflow (source of truth)
 
-- `data/strains.json` — curated `{id, name, type, effects[], note?}` records.
-- `data/lineage.json` — `{parent, child}` edges. **Edit these, then run
-  `pnpm build:graph`.** Never hand-edit `public/graph.json`.
-- `scripts/build-graph.ts` validates (dup ids, dangling refs, self-loops, dup
-  edges, **cycle detection**), computes `generation` (longest path from root) and
-  `descendants`, bakes color/size, runs ForceAtlas2, exports the graph.
+- `data/<source>/strains.json` — `{id, name, type, effects[], note?}` records;
+  `data/<source>/lineage.json` — `{parent, child}` edges. The `curated` source is
+  authored directly in this canonical shape. **Edit these, then run
+  `pnpm build:graph`.** Never hand-edit any `public/graph.*.json`.
+- `scripts/build-graph.ts` runs each registered source through its adapter, then
+  `compile()`: validates (dup ids, dangling refs, self-loops, dup edges, **cycle
+  detection** — per source) → computes `generation` + `descendants` → bakes
+  color/size/**provenance** → ForceAtlas2 → exports `public/graph.<source>.json`.
+  It also builds the `all` union (see below).
+
+## Multi-source (Phase 4)
+
+Data **source** is a swappable axis, sibling to the 2D/3D renderer axis.
+Principle: **separate at rest, unified at view-time.**
+
+- **Registry:** `data/sources.ts` — the single list of sources (`{id, label,
+  confidence, dir}`), ordered by trust. Imported by **both** the build and the
+  client (`AVAILABLE_SOURCES` feeds the dropdown). Add a source here.
+- **Adapters** (`scripts/adapters/`): the `SourceAdapter` contract is the
+  standardized input point — `load()` returns canonical `{strains, lineage}`, and
+  everything downstream is free. `curated.ts` is identity; `leafly.ts`
+  (`makeLeaflyAdapter(id, dir)`) normalizes a raw scrape then applies a patch.
+- **Massaging discipline:** a scraped source keeps `data/<id>/raw/` (never
+  hand-edited, re-scrapeable) + `data/<id>/patch.json` (declared
+  drop/override/add ops). Hand-fixes stay a reviewable diff. See
+  `data/expanded-demo/` for the worked example.
+- **Union (`all`):** `mergeSources()` folds sources in trust order with
+  **curated-wins precedence** (first writer of an id/edge wins) and stamps each
+  node's true origin; output is `public/graph.all.json`. It only appears in the
+  dropdown once >1 source exists.
+- **Provenance:** every node carries `source` + `confidence`. `DetailPanel` shows
+  a badge for non-curated nodes; the 2D union view mutes non-curated nodes at
+  rest (`GraphController` `dimLowConfidence`) so the verified core dominates.
+- Full design notes: `docs/phase-4-plan.md`.
 
 ## Architecture
 
-- `app/lib/strains.ts` — shared types + constants.
+- `app/lib/strains.ts` — shared types + constants (incl. `Confidence`,
+  `TYPE_COLORS`, `CONFIDENCE_META`).
+- `data/sources.ts` — source registry shared by build + client (see *Multi-source*).
 - `app/lib/graph-utils.ts` — `computeFamily()` (ancestors ∪ self ∪ descendants).
 - `app/lib/recommend.ts` — scoring: Jaccard effect overlap + undirected lineage
   proximity, with nearest-common-ancestor explanations. Renderer-agnostic.
 - `app/lib/useStrainExplorer.ts` — **headless orchestration hook shared by both
-  renderers.** Owns graph load, selection, type filters, recommendations, and the
-  derived focus/relevant sets. Put shared interaction logic HERE so both views
-  follow automatically.
+  renderers.** Owns the active **source** (fetches `/graph.<source>.json`),
+  graph load, selection, type filters, recommendations, and the derived
+  focus/relevant sets. Put shared interaction logic HERE so both views follow
+  automatically.
 - `app/components/StrainGraph.tsx` (2D) and `StrainGraph3D.tsx` (3D) are thin
   skins that map the hook's state to their draw API (Sigma reducers vs
-  force-graph accessors). The panels (`graph/SearchPanel`, `DetailPanel`,
-  `RecommendPanel`, `FilterLegend`) are shared and renderer-agnostic.
+  force-graph accessors). The panels (`graph/SourcePanel`, `SearchPanel`,
+  `DetailPanel`, `RecommendPanel`, `FilterLegend`) are shared and
+  renderer-agnostic.
 - Renderers are browser-only — loaded via `dynamic(..., { ssr: false })`.
 
 ## Gotchas
@@ -83,29 +116,16 @@ meaningful checkpoints. Because shared logic lives in `useStrainExplorer` +
 `react-force-graph-3d` versions; `/3d` is code-split so three.js never loads on
 the 2D path. **Do not treat 3D lagging behind 2D as a bug.**
 
-## Next: Phase 4 — source as a swappable axis (PLANNED)
-
-Generalize the single curated dataset into N named **sources** on a
-confidence/coverage gradient (`curated` → `expanded`/Leafly → `crowd`), selectable
-at runtime via a dropdown, plus an `all` **union** view that visualizes them
-together with provenance. Source becomes a third modular axis alongside the
-renderer (2D/3D).
-
-Principle: **separate at rest, unified at view-time.** Each source is stored and
-massaged in isolation (`data/<id>/`, with `raw/` + `patch.json` so raw scrapes are
-never hand-edited); each compiles to its own offline-baked `public/graph.<id>.json`;
-"all together" is just another build output that merges with **curated-wins
-precedence**. A `SourceAdapter` contract (`scripts/adapters/`) is the standardized
-input point — any dataset that returns `{ strains, lineage }` flows through the
-existing validate→derive→bake→layout pipeline and both renderers for free, exactly
-like the shared `useStrainExplorer` hook already does for 2D/3D.
-
-**Full plan — read before starting Phase 4 work: `docs/phase-4-plan.md`.**
-Until it lands, the single-source description in *Data workflow* above is current.
-
 ## Status
 
-Phases 0–3 complete: scaffold, curated data + build pipeline, explorer UX
-(focus/search/filter/detail), and the recommender. Experimental 3D view merged.
-Phase 4 (multi-source) planned — see `docs/phase-4-plan.md`. See commit history
-(detailed messages) for the full arc.
+Phases 0–4 complete: scaffold, curated data + build pipeline, explorer UX
+(focus/search/filter/detail), the recommender, experimental 3D view, and
+**multi-source** (swappable data sources + `all` union with provenance; see
+*Multi-source* above and `docs/phase-4-plan.md`). See commit history (detailed
+messages) for the full arc.
+
+Phase 4 follow-ups not yet done: mount `SourcePanel` in the 3D view (deliberate
+3D checkpoint item — switching already works there via the shared hook, just no
+UI); a real Leafly source (the `expanded-demo` sample proves the seam — swap in a
+real dump/adapter); the `crowd` tier; richer per-source coloring / a provenance
+legend beyond the current resting-dim.

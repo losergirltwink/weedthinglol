@@ -6,6 +6,7 @@ import { NodeCircleProgram, EdgeArrowProgram, EdgeRectangleProgram } from "sigma
 import "@react-sigma/core/lib/style.css";
 
 import { useStrainExplorer } from "@/app/lib/useStrainExplorer";
+import { ALL_SOURCE } from "@/data/sources";
 import { GraphController } from "./graph/GraphController";
 import { SourcePanel } from "./graph/SourcePanel";
 import { SearchPanel } from "./graph/SearchPanel";
@@ -62,6 +63,7 @@ export default function StrainGraph() {
             focusSet={focusSet}
             highlightSet={recommendedSet}
             activeTypes={activeTypes}
+            dimLowConfidence={source === ALL_SOURCE.id}
             onSelect={setSelectedId}
           />
         </SigmaContainer>

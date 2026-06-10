@@ -1,6 +1,7 @@
 "use client";
 
-import { TYPE_COLORS, type StrainType } from "@/app/lib/strains";
+import { CONFIDENCE_META, TYPE_COLORS, type Confidence, type StrainType } from "@/app/lib/strains";
+import { sourceById } from "@/data/sources";
 import type { StrainGraphType } from "@/app/lib/graph-utils";
 
 interface Props {
@@ -22,6 +23,13 @@ export function DetailPanel({ graph, id, onSelect, onClose }: Props) {
     .sort((a, b) => a.label.localeCompare(b.label));
 
   const color = TYPE_COLORS[attrs.strainType as StrainType];
+
+  // Provenance badge: only surfaced for non-curated nodes, where it flags
+  // less-verified data (e.g. a Leafly scrape). Curated nodes show nothing.
+  const confidence = attrs.confidence as Confidence;
+  const showProvenance = confidence !== "curated";
+  const meta = CONFIDENCE_META[confidence];
+  const sourceLabel = sourceById(attrs.source)?.label;
 
   return (
     <div className="rounded-lg bg-zinc-900/90 p-4 text-sm shadow-lg backdrop-blur">
@@ -47,6 +55,20 @@ export function DetailPanel({ graph, id, onSelect, onClose }: Props) {
         <span className="text-zinc-600">·</span>
         <span>{attrs.descendants} descendants</span>
       </div>
+
+      {showProvenance && meta && (
+        <div className="mt-2">
+          <span
+            className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium"
+            style={{ backgroundColor: `${meta.color}22`, color: meta.color }}
+            title="This strain comes from a less-verified data source"
+          >
+            <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: meta.color }} />
+            {meta.label}
+            {sourceLabel && <span className="opacity-70">· {sourceLabel}</span>}
+          </span>
+        </div>
+      )}
 
       {attrs.effects.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-1.5">

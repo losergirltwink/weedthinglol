@@ -53,5 +53,12 @@ export const TYPE_COLORS: Record<StrainType, string> = {
   landrace: "#a16207", // brown
 };
 
+/** Display metadata per confidence tier — drives the provenance badge + legend. */
+export const CONFIDENCE_META: Record<Confidence, { label: string; color: string }> = {
+  curated: { label: "Curated", color: "#22c55e" }, // green — verified
+  documented: { label: "Documented", color: "#f59e0b" }, // amber — scraped
+  crowd: { label: "Crowd", color: "#ef4444" }, // red — sparse/contested
+};
+
 /** Display order for the legend / filters. */
 export const STRAIN_TYPES: StrainType[] = ["landrace", "sativa", "hybrid", "indica"];
