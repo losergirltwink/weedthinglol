@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback, useState } from "react";
 import { DirectedGraph } from "graphology";
 import { SigmaContainer } from "@react-sigma/core";
 import { NodeCircleProgram, EdgeArrowProgram, EdgeRectangleProgram } from "sigma/rendering";
@@ -47,13 +48,21 @@ export default function StrainGraph() {
     focusSet,
   } = useStrainExplorer();
 
+  // Bumped to remount the SigmaContainer once a lost WebGL context is restored.
+  const [glGeneration, setGlGeneration] = useState(0);
+  const handleContextRestored = useCallback(() => {
+    console.warn("Sigma WebGL context restored — remounting renderer to recover.");
+    setGlGeneration((g) => g + 1);
+  }, []);
+
   return (
     <div className="relative h-full w-full">
       {graph ? (
         // `key` per source: a new source is a new node set + layout, so remount
-        // Sigma cleanly rather than diffing one graph into another.
+        // Sigma cleanly rather than diffing one graph into another. The
+        // generation suffix forces the same clean remount after a lost GL context.
         <SigmaContainer
-          key={source}
+          key={`${source}-${glGeneration}`}
           graph={DirectedGraph}
           style={{ height: "100%", width: "100%", background: "transparent" }}
           settings={SIGMA_SETTINGS}
@@ -66,6 +75,7 @@ export default function StrainGraph() {
             activeTypes={activeTypes}
             dimLowConfidence={source === ALL_SOURCE.id}
             onSelect={setSelectedId}
+            onContextRestored={handleContextRestored}
           />
         </SigmaContainer>
       ) : (

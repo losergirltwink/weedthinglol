@@ -7,6 +7,7 @@ import {
   useRegisterEvents,
   useSetSettings,
 } from "@react-sigma/core";
+import { drawDiscNodeLabel } from "sigma/rendering";
 
 import type { StrainType } from "@/app/lib/strains";
 import type { StrainGraphType } from "@/app/lib/graph-utils";
@@ -41,6 +42,8 @@ interface Props {
   /** Union view: mute non-curated nodes at rest so the verified core stands out. */
   dimLowConfidence: boolean;
   onSelect: (id: string | null) => void;
+  /** Fired once the WebGL context is restored, so the parent can remount Sigma. */
+  onContextRestored: () => void;
 }
 
 export function GraphController({
@@ -51,6 +54,7 @@ export function GraphController({
   activeTypes,
   dimLowConfidence,
   onSelect,
+  onContextRestored,
 }: Props) {
   const sigma = useSigma();
   const loadGraph = useLoadGraph();
@@ -62,6 +66,29 @@ export function GraphController({
   useEffect(() => {
     loadGraph(graph);
   }, [loadGraph, graph]);
+
+  // WebGL context loss (GPU reclaim, tab backgrounding, large scenes on weak
+  // GPUs) leaves Sigma's canvases frozen/ghosted. preventDefault on the loss
+  // event tells the browser to restore the context; we wait for the
+  // `webglcontextrestored` event before asking the parent to remount Sigma.
+  // Recreating it on the loss event instead races a still-dead GPU and fails to
+  // compile node programs ("could not find a suitable program for circle").
+  useEffect(() => {
+    const canvases = Array.from(
+      sigma.getContainer().querySelectorAll("canvas"),
+    );
+    const onLost = (e: Event) => e.preventDefault();
+    const onRestored = () => onContextRestored();
+    canvases.forEach((c) => {
+      c.addEventListener("webglcontextlost", onLost);
+      c.addEventListener("webglcontextrestored", onRestored);
+    });
+    return () =>
+      canvases.forEach((c) => {
+        c.removeEventListener("webglcontextlost", onLost);
+        c.removeEventListener("webglcontextrestored", onRestored);
+      });
+  }, [sigma, onContextRestored]);
 
   // Wire interactions.
   useEffect(() => {
@@ -101,6 +128,17 @@ export function GraphController({
       (hoverSet !== null && !hoverSet.has(node));
 
     setSettings({
+      // The selected node and the hovered node are labeled by the hover renderer
+      // (drawHover), which draws their label inside a dark box. Sigma's regular
+      // label pass doesn't know that and would draw the SAME label again at a
+      // slightly different offset — a doubled/ghosted label, very visible zoomed
+      // in. Skip those two here so each is labeled exactly once.
+      defaultDrawNodeLabel: (context, data, labelSettings) => {
+        const key = (data as { key?: string }).key;
+        if (key === selectedId || key === hovered) return;
+        drawDiscNodeLabel(context, data, labelSettings);
+      },
+
       nodeReducer: (node, data) => {
         if (!activeTypes.has(data.strainType as StrainType)) {
           return { ...data, hidden: true };
@@ -110,15 +148,26 @@ export function GraphController({
         }
         const emphasized = relevantSet !== null || hoverSet !== null;
         const isRecommended = highlightSet?.has(node) ?? false;
-        // In the union, non-curated nodes recede at rest (until you select or
-        // hover) so the verified curated core reads as primary.
+        // At rest (nothing selected/hovered) two de-emphasis channels apply, both
+        // lifted the moment you engage the graph so exploration shows everything:
+        //   • union view mutes non-curated nodes so the verified core dominates;
+        //   • cross-expression nodes ("A x B") shrink + drop their label so the
+        //     named-cultivar backbone reads clearly (they're connective tissue).
         const restingLowConf =
           dimLowConfidence && !emphasized && data.confidence !== "curated";
+        const restingCross = !emphasized && data.nameKind === "cross";
+        let color = data.color ?? DIM_NODE;
+        let size = data.size ?? 1;
+        if (restingLowConf) {
+          color = mute(color, 0.5);
+          size *= 0.7;
+        }
+        if (restingCross) size *= 0.85;
         return {
           ...data,
-          ...(restingLowConf
-            ? { color: mute(data.color ?? DIM_NODE, 0.5), size: (data.size ?? 1) * 0.7 }
-            : {}),
+          color,
+          size,
+          ...(restingCross ? { label: "" } : {}),
           zIndex: node === selectedId ? 3 : isRecommended ? 2 : 1,
           forceLabel: emphasized || undefined,
           highlighted: node === selectedId,

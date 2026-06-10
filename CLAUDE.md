@@ -49,8 +49,25 @@ npm.** Native build deps (sharp, unrs-resolver, esbuild) must stay `true` under
 - `scripts/build-graph.ts` runs each registered source through its adapter, then
   `compile()`: validates (dup ids, dangling refs, self-loops, dup edges, **cycle
   detection** — per source) → computes `generation` + `descendants` → bakes
-  color/size/**provenance** → ForceAtlas2 → exports `public/graph.<source>.json`.
-  It also builds the `all` union (see below).
+  color/size/**provenance**/**entity-kind** → ForceAtlas2 → exports
+  `public/graph.<source>.json`. It also builds the `all` union (see below).
+- **Effect partition:** `compile()` splits each strain's `effects` against
+  `NEGATIVE_EFFECTS` (strains.ts) into desirable `effects` + side-effect
+  `negatives` (e.g. dry mouth, paranoid). Source-agnostic — curated has no
+  negatives; crowd data mixes both in one list. This keeps effect-similarity from
+  matching on shared side-effects and feeds the recommender's avoid-penalty +
+  `DetailPanel`'s "May cause" group. Add new side-effects to `NEGATIVE_EFFECTS`.
+- **Entity-kind (`nameKind`):** `compile()` classifies each node `named` vs
+  `cross` (`classifyNameKind`). A `cross`-expression is a node whose NAME is a
+  cross formula (`A x B`, split on the shared `CROSS_SPLIT` from the kushy adapter)
+  **and** whose parents structurally corroborate it (in-degree ≥ component count)
+  — connective tissue between parents we already have, not a named cultivar.
+  Requiring corroboration ("approach 2") is also a precision guard: it refuses to
+  tag parse-noise like `XXX OG (Triple X OG)`. Curated names are never cross-
+  shaped, so curated is always `named`. Drives the recommender's cross
+  down-weight + a subtle 2D resting de-emphasis (cross nodes shrink + drop their
+  label at rest, lifted on select/hover). The build logs `entity-kind: tagged /
+  cross-shaped (stragglers)` per graph.
 
 ## Multi-source (Phase 4)
 
@@ -96,11 +113,16 @@ Principle: **separate at rest, unified at view-time.**
 ## Architecture
 
 - `app/lib/strains.ts` — shared types + constants (incl. `Confidence`,
-  `TYPE_COLORS`, `CONFIDENCE_META`).
+  `TYPE_COLORS`, `CONFIDENCE_META`, `NEGATIVE_EFFECTS`).
 - `data/sources.ts` — source registry shared by build + client (see *Multi-source*).
 - `app/lib/graph-utils.ts` — `computeFamily()` (ancestors ∪ self ∪ descendants).
-- `app/lib/recommend.ts` — scoring: Jaccard effect overlap + undirected lineage
-  proximity, with nearest-common-ancestor explanations. Renderer-agnostic.
+- `app/lib/recommend.ts` — scoring: Jaccard overlap of **desirable** effects +
+  undirected lineage proximity + a gentle same-`strainType` nudge, minus
+  side-effect penalties (explicitly-avoided effects hit hard; side-effects a
+  candidate adds beyond the seed's hit gently) and a gentle **cross-expression
+  down-weight** (a `cross` node is connective tissue, not a strain to seek out).
+  Explanations carry shared-effect count, nearest common ancestor, hop distance,
+  and the driving signal. Renderer-agnostic.
 - `app/lib/useStrainExplorer.ts` — **headless orchestration hook shared by both
   renderers.** Owns the active **source** (fetches `/graph.<source>.json`),
   graph load, selection, type filters, recommendations, and the derived
@@ -149,3 +171,17 @@ hook; this added the dropdown UI). Still open: graduated per-tier dimming (the
 current resting-dim is binary curated-vs-rest — fine for two tiers, worth revisiting if a middle
 `documented` tier returns); a higher-fidelity `documented`-tier source (kushy's
 `crosses` column is sparse; the seam is proven if a better dump appears).
+
+Data-quality + recommender pass (post-Phase-4): effects are partitioned into
+desirable vs `negatives` (see *Data workflow*); the recommender gained type
+affinity, an avoid-penalty for side-effects, and richer "why" explanations.
+Cross-source identity is reconciled by name at union time (see *Multi-source*).
+
+**Deferred enhancement — curated improvements & source reviews:** thickening the
+curated tier is intentionally a *separate, later* effort. Two flavors when we pick
+it up: (1) **hand-author** new curated records for high-traffic strains currently
+missing or crowd-only; (2) a **review** workflow — promote/correct crowd strains
+into curated (right type, verified lineage), turning the crowd tier into a
+candidate queue. Both flow through `data/curated/*.json` + `pnpm build:graph`; no
+new machinery needed. Until then this round was **massage-only** (no new
+hand-authored strains).
