@@ -15,6 +15,21 @@ const DIM_NODE = "#3f3f46"; // zinc-700
 const DIM_EDGE = "#1f2937"; // gray-800
 const FOCUS_EDGE = "#6b7280"; // gray-500
 
+const MUTE_BG = [24, 24, 27]; // zinc-900 — what muted nodes blend toward
+
+/** Blend a hex color toward the dark background to de-emphasize a node. */
+function mute(hex: string, amount: number): string {
+  const h = hex.replace("#", "");
+  const ch = (i: number) => parseInt(h.slice(i, i + 2), 16);
+  const mix = (c: number, bg: number) => Math.round(c * (1 - amount) + bg * amount);
+  return (
+    "#" +
+    [mix(ch(0), MUTE_BG[0]), mix(ch(2), MUTE_BG[1]), mix(ch(4), MUTE_BG[2])]
+      .map((v) => v.toString(16).padStart(2, "0"))
+      .join("")
+  );
+}
+
 interface Props {
   graph: StrainGraphType;
   selectedId: string | null;
@@ -23,6 +38,8 @@ interface Props {
   /** Recommended strains to keep lit alongside the family line, or null. */
   highlightSet: Set<string> | null;
   activeTypes: Set<StrainType>;
+  /** Union view: mute non-curated nodes at rest so the verified core stands out. */
+  dimLowConfidence: boolean;
   onSelect: (id: string | null) => void;
 }
 
@@ -32,6 +49,7 @@ export function GraphController({
   focusSet,
   highlightSet,
   activeTypes,
+  dimLowConfidence,
   onSelect,
 }: Props) {
   const sigma = useSigma();
@@ -92,8 +110,15 @@ export function GraphController({
         }
         const emphasized = relevantSet !== null || hoverSet !== null;
         const isRecommended = highlightSet?.has(node) ?? false;
+        // In the union, non-curated nodes recede at rest (until you select or
+        // hover) so the verified curated core reads as primary.
+        const restingLowConf =
+          dimLowConfidence && !emphasized && data.confidence !== "curated";
         return {
           ...data,
+          ...(restingLowConf
+            ? { color: mute(data.color ?? DIM_NODE, 0.5), size: (data.size ?? 1) * 0.7 }
+            : {}),
           zIndex: node === selectedId ? 3 : isRecommended ? 2 : 1,
           forceLabel: emphasized || undefined,
           highlighted: node === selectedId,
@@ -129,6 +154,7 @@ export function GraphController({
     focusSet,
     highlightSet,
     activeTypes,
+    dimLowConfidence,
     hovered,
   ]);
 

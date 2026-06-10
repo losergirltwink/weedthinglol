@@ -12,6 +12,7 @@ import SpriteText from "three-spritetext";
 
 import type { StrainType } from "@/app/lib/strains";
 import { useStrainExplorer } from "@/app/lib/useStrainExplorer";
+import { SourcePanel } from "./graph/SourcePanel";
 import { SearchPanel } from "./graph/SearchPanel";
 import { FilterLegend } from "./graph/FilterLegend";
 import { DetailPanel } from "./graph/DetailPanel";
@@ -42,6 +43,9 @@ export default function StrainGraph3D() {
   // Shared interaction state machine (selection, filters, recs, lit sets).
   const {
     graph,
+    source,
+    setSource,
+    availableSources,
     selectedId,
     setSelectedId,
     activeTypes,
@@ -141,8 +145,9 @@ export default function StrainGraph3D() {
         onBackgroundClick={() => setSelectedId(null)}
       />
 
-      {/* Right column: search + detail + recommendations (shared with 2D) */}
+      {/* Right column: source + search + detail + recommendations (shared with 2D) */}
       <div className="absolute right-6 top-6 flex max-h-[calc(100%-3rem)] w-72 flex-col gap-3 overflow-y-auto">
+        <SourcePanel sources={availableSources} value={source} onChange={setSource} />
         <SearchPanel graph={graph} onSelect={setSelectedId} />
         {selectedId && (
           <DetailPanel

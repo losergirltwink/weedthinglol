@@ -1,0 +1,11 @@
+{
+  "_comment": "Hand-authored fixes layered over data/kushy/raw/ (never edit the raw scrape). Ops: dropStrains[], dropEdges[{parent,child}], overrideStrains[{id,...}], addStrains[], addEdges[] (ids are kushy-<n>); aliases{ aliasName: canonicalName } folds same-strain spellings/abbreviations onto one node. Exact-name duplicates merge automatically — only list abbreviations that DON'T normalize equal. Never alias distinct-but-related strains (NYC Diesel is not Sour Diesel).",
+  "aliases": {
+    "Sour D": "Sour Diesel",
+    "NL": "Northern Lights",
+    "NL#5": "Northern Lights #5",
+    "GSC": "Girl Scout Cookies",
+    "C99": "Cinderella 99",
+    "NYCD": "NYC Diesel"
+  }
+}
