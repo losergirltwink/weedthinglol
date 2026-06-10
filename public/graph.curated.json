@@ -16,6 +16,7 @@
           "sleepy",
           "happy"
         ],
+        "negatives": [],
         "generation": 0,
         "descendants": 18,
         "size": 16.727922061357855,
@@ -36,6 +37,7 @@
           "uplifted",
           "creative"
         ],
+        "negatives": [],
         "generation": 0,
         "descendants": 25,
         "size": 19,
@@ -56,6 +58,7 @@
           "happy",
           "energetic"
         ],
+        "negatives": [],
         "generation": 0,
         "descendants": 15,
         "size": 15.618950038622252,
@@ -76,6 +79,7 @@
           "happy",
           "energetic"
         ],
+        "negatives": [],
         "generation": 0,
         "descendants": 14,
         "size": 15.224972160321824,
@@ -96,6 +100,7 @@
           "uplifted",
           "focused"
         ],
+        "negatives": [],
         "generation": 0,
         "descendants": 7,
         "size": 11.937253933193773,
@@ -116,6 +121,7 @@
           "sleepy",
           "happy"
         ],
+        "negatives": [],
         "generation": 0,
         "descendants": 11,
         "size": 13.9498743710662,
@@ -136,6 +142,7 @@
           "energetic",
           "happy"
         ],
+        "negatives": [],
         "generation": 0,
         "descendants": 3,
         "size": 9.196152422706632,
@@ -156,6 +163,7 @@
           "uplifted",
           "energetic"
         ],
+        "negatives": [],
         "generation": 0,
         "descendants": 2,
         "size": 8.242640687119286,
@@ -175,6 +183,7 @@
           "relaxed",
           "sleepy"
         ],
+        "negatives": [],
         "generation": 0,
         "descendants": 5,
         "size": 10.70820393249937,
@@ -195,6 +204,7 @@
           "uplifted",
           "energetic"
         ],
+        "negatives": [],
         "generation": 0,
         "descendants": 1,
         "size": 7,
@@ -215,6 +225,7 @@
           "happy",
           "euphoric"
         ],
+        "negatives": [],
         "generation": 0,
         "descendants": 12,
         "size": 14.392304845413264,
@@ -235,6 +246,7 @@
           "energetic",
           "creative"
         ],
+        "negatives": [],
         "generation": 0,
         "descendants": 1,
         "size": 7,
@@ -255,6 +267,7 @@
           "relaxed",
           "happy"
         ],
+        "negatives": [],
         "note": "Origin debated; commonly traced to Thai/Nepalese bagseed.",
         "generation": 1,
         "descendants": 11,
@@ -276,6 +289,7 @@
           "sleepy",
           "happy"
         ],
+        "negatives": [],
         "note": "Clone-only; precise origin unverified.",
         "generation": 0,
         "descendants": 2,
@@ -297,6 +311,7 @@
           "happy",
           "euphoric"
         ],
+        "negatives": [],
         "generation": 0,
         "descendants": 2,
         "size": 8.242640687119286,
@@ -317,6 +332,7 @@
           "happy",
           "euphoric"
         ],
+        "negatives": [],
         "generation": 0,
         "descendants": 2,
         "size": 8.242640687119286,
@@ -337,6 +353,7 @@
           "happy",
           "uplifted"
         ],
+        "negatives": [],
         "generation": 1,
         "descendants": 10,
         "size": 13.486832980505138,
@@ -357,6 +374,7 @@
           "sleepy",
           "happy"
         ],
+        "negatives": [],
         "generation": 1,
         "descendants": 5,
         "size": 10.70820393249937,
@@ -377,6 +395,7 @@
           "creative",
           "uplifted"
         ],
+        "negatives": [],
         "generation": 1,
         "descendants": 3,
         "size": 9.196152422706632,
@@ -397,6 +416,7 @@
           "happy",
           "euphoric"
         ],
+        "negatives": [],
         "generation": 2,
         "descendants": 2,
         "size": 8.242640687119286,
@@ -417,6 +437,7 @@
           "euphoric",
           "happy"
         ],
+        "negatives": [],
         "generation": 2,
         "descendants": 1,
         "size": 7,
@@ -437,6 +458,7 @@
           "happy",
           "sleepy"
         ],
+        "negatives": [],
         "generation": 2,
         "descendants": 2,
         "size": 8.242640687119286,
@@ -457,6 +479,7 @@
           "happy",
           "euphoric"
         ],
+        "negatives": [],
         "note": "Lineage contested; commonly Chemdawg x Hindu Kush.",
         "generation": 2,
         "descendants": 9,
@@ -478,6 +501,7 @@
           "uplifted",
           "happy"
         ],
+        "negatives": [],
         "generation": 3,
         "descendants": 1,
         "size": 7,
@@ -498,6 +522,7 @@
           "sleepy",
           "happy"
         ],
+        "negatives": [],
         "note": "Indica parent unverified; descends from OG Kush.",
         "generation": 3,
         "descendants": 0,
@@ -519,6 +544,7 @@
           "happy",
           "sleepy"
         ],
+        "negatives": [],
         "generation": 2,
         "descendants": 0,
         "size": 4,
@@ -539,6 +565,7 @@
           "euphoric",
           "happy"
         ],
+        "negatives": [],
         "note": "Florida OG Kush phenotype.",
         "generation": 3,
         "descendants": 1,
@@ -560,6 +587,7 @@
           "happy",
           "sleepy"
         ],
+        "negatives": [],
         "generation": 1,
         "descendants": 1,
         "size": 7,
@@ -580,6 +608,7 @@
           "relaxed",
           "uplifted"
         ],
+        "negatives": [],
         "generation": 2,
         "descendants": 0,
         "size": 4,
@@ -600,6 +629,7 @@
           "sleepy",
           "happy"
         ],
+        "negatives": [],
         "generation": 3,
         "descendants": 1,
         "size": 7,
@@ -620,6 +650,7 @@
           "happy",
           "euphoric"
         ],
+        "negatives": [],
         "generation": 4,
         "descendants": 0,
         "size": 4,
@@ -640,6 +671,7 @@
           "euphoric",
           "relaxed"
         ],
+        "negatives": [],
         "generation": 3,
         "descendants": 5,
         "size": 10.70820393249937,
@@ -660,6 +692,7 @@
           "relaxed",
           "happy"
         ],
+        "negatives": [],
         "note": "Phenotype of Girl Scout Cookies.",
         "generation": 4,
         "descendants": 1,
@@ -681,6 +714,7 @@
           "relaxed",
           "uplifted"
         ],
+        "negatives": [],
         "generation": 4,
         "descendants": 1,
         "size": 7,
@@ -701,6 +735,7 @@
           "euphoric",
           "happy"
         ],
+        "negatives": [],
         "generation": 5,
         "descendants": 0,
         "size": 4,
@@ -721,6 +756,7 @@
           "happy",
           "euphoric"
         ],
+        "negatives": [],
         "generation": 4,
         "descendants": 1,
         "size": 7,
@@ -741,6 +777,7 @@
           "happy",
           "euphoric"
         ],
+        "negatives": [],
         "generation": 5,
         "descendants": 0,
         "size": 4,
@@ -761,6 +798,7 @@
           "uplifted",
           "creative"
         ],
+        "negatives": [],
         "generation": 3,
         "descendants": 0,
         "size": 4,
@@ -781,6 +819,7 @@
           "energetic",
           "happy"
         ],
+        "negatives": [],
         "generation": 1,
         "descendants": 0,
         "size": 4,
@@ -801,6 +840,7 @@
           "happy",
           "uplifted"
         ],
+        "negatives": [],
         "generation": 1,
         "descendants": 0,
         "size": 4,
@@ -821,6 +861,7 @@
           "uplifted",
           "energetic"
         ],
+        "negatives": [],
         "generation": 1,
         "descendants": 1,
         "size": 7,
@@ -841,6 +882,7 @@
           "uplifted",
           "energetic"
         ],
+        "negatives": [],
         "generation": 2,
         "descendants": 0,
         "size": 4,
@@ -861,6 +903,7 @@
           "uplifted",
           "energetic"
         ],
+        "negatives": [],
         "generation": 2,
         "descendants": 0,
         "size": 4,
@@ -881,6 +924,7 @@
           "focused",
           "happy"
         ],
+        "negatives": [],
         "note": "Descends from Skunk #1.",
         "generation": 2,
         "descendants": 0,
@@ -902,6 +946,7 @@
           "happy",
           "euphoric"
         ],
+        "negatives": [],
         "generation": 4,
         "descendants": 0,
         "size": 4,

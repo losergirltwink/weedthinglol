@@ -83,6 +83,24 @@ export function DetailPanel({ graph, id, onSelect, onClose }: Props) {
         </div>
       )}
 
+      {attrs.negatives.length > 0 && (
+        <div className="mt-2">
+          <p className="mb-1 text-xs font-medium uppercase tracking-wide text-amber-600/80">
+            May cause
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {attrs.negatives.map((e) => (
+              <span
+                key={e}
+                className="rounded-full border border-amber-900/60 px-2 py-0.5 text-xs capitalize text-amber-500/90"
+              >
+                {e}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
       {attrs.note && (
         <p className="mt-3 text-xs italic leading-relaxed text-zinc-500">{attrs.note}</p>
       )}

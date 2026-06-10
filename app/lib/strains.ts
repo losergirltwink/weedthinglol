@@ -11,6 +11,27 @@ export type StrainType = "indica" | "sativa" | "hybrid" | "landrace";
  */
 export type Confidence = "curated" | "documented" | "crowd";
 
+/**
+ * Effects that are side-effects to AVOID, not desirable traits. Crowd sources
+ * (kushy) record these alongside real effects; curated never does. The build
+ * partitions a strain's effects against this set into positive `effects` vs
+ * `negatives` (see StrainNodeAttributes), so the recommender never treats a
+ * shared "dry mouth" as similarity, and can optionally penalize them. Stored
+ * lowercase to match the normalized effect tags. Extend as new negatives appear.
+ */
+export const NEGATIVE_EFFECTS: ReadonlySet<string> = new Set([
+  "dry mouth",
+  "dry eyes",
+  "paranoid",
+  "anxious",
+  "dizzy",
+  "headache",
+]);
+
+/** True if an effect tag is a side-effect to avoid rather than a desirable one. */
+export const isNegativeEffect = (effect: string): boolean =>
+  NEGATIVE_EFFECTS.has(effect.trim().toLowerCase());
+
 /** A curated source record (data/strains.json). No layout/derived fields. */
 export interface Strain {
   id: string;
@@ -32,7 +53,11 @@ export interface StrainNodeAttributes {
   // Stored as `strainType` (not `type`) because Sigma reserves the node
   // `type` attribute for the rendering program name.
   strainType: StrainType;
+  // Desirable effects only — side-effects are split out into `negatives` at
+  // bake time (see NEGATIVE_EFFECTS), so effect-similarity never matches on them.
   effects: string[];
+  // Side-effects to avoid (dry mouth, paranoid, …); empty for curated data.
+  negatives: string[];
   note?: string;
   generation: number;
   descendants: number;

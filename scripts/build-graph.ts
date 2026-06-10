@@ -19,7 +19,7 @@ import { DirectedGraph } from "graphology";
 import forceAtlas2 from "graphology-layout-forceatlas2";
 
 import type { Strain, Lineage, Confidence } from "../app/lib/strains";
-import { TYPE_COLORS } from "../app/lib/strains";
+import { TYPE_COLORS, isNegativeEffect } from "../app/lib/strains";
 import { SOURCES, ALL_SOURCE, type SourceDef } from "../data/sources";
 import { adapterFor } from "./adapters";
 import { normalizeName } from "./adapters/kushy";
@@ -56,12 +56,19 @@ function compile(
       continue;
     }
     seen.add(s.id);
+    // Partition effects into desirable vs side-effects to avoid. Crowd sources
+    // mix the two in one list; splitting here (source-agnostic) keeps the
+    // recommender's effect-similarity clean and feeds the avoid-penalty.
+    const effects: string[] = [];
+    const negatives: string[] = [];
+    for (const e of s.effects ?? []) (isNegativeEffect(e) ? negatives : effects).push(e);
     graph.addNode(s.id, {
       label: s.name,
       // NB: stored as `strainType`, not `type` — Sigma reserves the node
       // `type` attribute for selecting the rendering program.
       strainType: s.type,
-      effects: s.effects ?? [],
+      effects,
+      negatives,
       ...(s.note ? { note: s.note } : {}),
     });
   }
