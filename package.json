@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "stop": "pkill -f '[n]ext dev|[n]ext-server' && echo 'dev server stopped' || echo 'no dev server running'",
     "build:graph": "tsx scripts/build-graph.ts",
     "build": "next build",
     "start": "next start",
