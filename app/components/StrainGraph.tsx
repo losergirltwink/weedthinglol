@@ -1,14 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
 import { DirectedGraph } from "graphology";
-import type { SerializedGraph } from "graphology-types";
 import { SigmaContainer } from "@react-sigma/core";
 import { NodeCircleProgram, EdgeArrowProgram, EdgeRectangleProgram } from "sigma/rendering";
 import "@react-sigma/core/lib/style.css";
 
-import { STRAIN_TYPES, type StrainNodeAttributes, type StrainType } from "@/app/lib/strains";
-import { computeFamily, type StrainGraphType } from "@/app/lib/graph-utils";
+import { useStrainExplorer } from "@/app/lib/useStrainExplorer";
 import { GraphController } from "./graph/GraphController";
 import { SearchPanel } from "./graph/SearchPanel";
 import { FilterLegend } from "./graph/FilterLegend";
@@ -33,45 +30,16 @@ const SIGMA_SETTINGS = {
 };
 
 export default function StrainGraph() {
-  const [graph, setGraph] = useState<StrainGraphType | null>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [activeTypes, setActiveTypes] = useState<Set<StrainType>>(
-    () => new Set(STRAIN_TYPES),
-  );
-  const [recommendedSet, setRecommendedSet] = useState<Set<string> | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const res = await fetch("/graph.json");
-      const data = (await res.json()) as SerializedGraph<StrainNodeAttributes>;
-      if (cancelled) return;
-      const g = new DirectedGraph<StrainNodeAttributes>();
-      g.import(data);
-      setGraph(g);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const focusSet = useMemo(
-    () => (graph && selectedId ? computeFamily(graph, selectedId) : null),
-    [graph, selectedId],
-  );
-
-  const handleRecommendations = useCallback((ids: Set<string>) => {
-    setRecommendedSet(ids.size ? ids : null);
-  }, []);
-
-  const toggleType = useCallback((type: StrainType) => {
-    setActiveTypes((prev) => {
-      const next = new Set(prev);
-      if (next.has(type)) next.delete(type);
-      else next.add(type);
-      return next;
-    });
-  }, []);
+  const {
+    graph,
+    selectedId,
+    setSelectedId,
+    activeTypes,
+    toggleType,
+    recommendedSet,
+    handleRecommendations,
+    focusSet,
+  } = useStrainExplorer();
 
   if (!graph) {
     return (

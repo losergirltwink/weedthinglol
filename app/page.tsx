@@ -1,3 +1,4 @@
+import Link from "next/link";
 import GraphExplorer from "./components/GraphExplorer";
 
 export default function Home() {
@@ -16,6 +17,12 @@ export default function Home() {
         <p className="mt-1 text-sm text-zinc-400">
           Click a strain to trace its lineage & find similar · or match by effect.
         </p>
+        <Link
+          href="/3d"
+          className="pointer-events-auto mt-2 inline-block rounded-md bg-zinc-800/80 px-3 py-1 text-xs text-zinc-300 backdrop-blur hover:bg-zinc-700"
+        >
+          Try 3D view →
+        </Link>
       </div>
     </main>
   );
