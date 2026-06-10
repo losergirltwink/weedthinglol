@@ -11,6 +11,7 @@ import { GraphController } from "./graph/GraphController";
 import { SourcePanel } from "./graph/SourcePanel";
 import { SearchPanel } from "./graph/SearchPanel";
 import { FilterLegend } from "./graph/FilterLegend";
+import { ProvenanceLegend } from "./graph/ProvenanceLegend";
 import { DetailPanel } from "./graph/DetailPanel";
 import { RecommendPanel } from "./graph/RecommendPanel";
 import { drawHover } from "./graph/drawHover";
@@ -96,9 +97,10 @@ export default function StrainGraph() {
         )}
       </div>
 
-      {/* Bottom-left: interactive legend / filters */}
+      {/* Bottom-left: provenance key (union only) + interactive type filter */}
       {graph && (
-        <div className="absolute bottom-6 left-6">
+        <div className="absolute bottom-6 left-6 flex flex-col gap-3">
+          <ProvenanceLegend graph={graph} />
           <FilterLegend activeTypes={activeTypes} onToggle={toggleType} />
         </div>
       )}

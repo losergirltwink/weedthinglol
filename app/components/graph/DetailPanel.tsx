@@ -61,7 +61,7 @@ export function DetailPanel({ graph, id, onSelect, onClose }: Props) {
           <span
             className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium"
             style={{ backgroundColor: `${meta.color}22`, color: meta.color }}
-            title="This strain comes from a less-verified data source"
+            title={`${meta.label} — ${meta.blurb}`}
           >
             <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: meta.color }} />
             {meta.label}

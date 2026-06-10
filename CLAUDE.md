@@ -81,7 +81,10 @@ Principle: **separate at rest, unified at view-time.**
   dropdown once >1 source exists.
 - **Provenance:** every node carries `source` + `confidence`. `DetailPanel` shows
   a badge for non-curated nodes; the 2D union view mutes non-curated nodes at
-  rest (`GraphController` `dimLowConfidence`) so the verified core dominates.
+  rest (`GraphController` `dimLowConfidence`) so the verified core dominates. The
+  `ProvenanceLegend` (2D, bottom-left) keys the confidence tiers and explains the
+  two visual channels (hue = strain type, brightness/size = confidence); it
+  auto-hides unless the loaded graph mixes tiers (i.e. the union).
 - Full design notes: `docs/phase-4-plan.md`.
 
 ## Architecture
@@ -133,9 +136,10 @@ messages) for the full arc.
 
 Phase 4 follow-ups: the **`crowd` tier is live** — `kushy` (a ~9.5k-strain
 community CSV scrape) compiles to a 1.2k-node connected lineage graph via
-name-mining + identity de-dup; it replaced the old `expanded-demo` sample. Still
-open: mount `SourcePanel` in the 3D view (deliberate 3D checkpoint item —
-switching already works there via the shared hook, just no UI); richer
-per-source coloring / a provenance legend beyond the current resting-dim; a
-higher-fidelity `documented`-tier source (kushy's `crosses` column is sparse;
-the seam is proven if a better dump appears).
+name-mining + identity de-dup; it replaced the old `expanded-demo` sample. The **provenance legend** is also
+done (`ProvenanceLegend`, see above). Still open: mount `SourcePanel` in the 3D
+view (deliberate 3D checkpoint item — switching already works there via the
+shared hook, just no UI); graduated per-tier dimming (the current resting-dim is
+binary curated-vs-rest — fine for two tiers, worth revisiting if a middle
+`documented` tier returns); a higher-fidelity `documented`-tier source (kushy's
+`crosses` column is sparse; the seam is proven if a better dump appears).
