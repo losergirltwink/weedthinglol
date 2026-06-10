@@ -40,6 +40,21 @@ npm.** Native build deps (sharp, unrs-resolver, esbuild) must stay `true` under
 - `pnpm exec tsc --noEmit` — typecheck. There is no headless browser here, so
   verify via tsc + eslint + the dev log, not a real render.
 
+## Branching & releases
+
+- **`develop` is the base for all changes.** Branch off `develop`, PR back into
+  `develop`. It's the integration/staging branch and tracks `origin/develop`.
+  Default working branch.
+- **`main` is release.** Promote to it only from `develop` (a release merge);
+  never branch features off `main` or commit to it directly. A CI/CD pipeline on
+  `main` is planned but not wired yet, so this is convention for now, not
+  enforcement — branch protection on `main` is the natural next step once CI
+  exists.
+- **End-of-change checklist:** `pnpm build:graph` (if any `data/` or build code
+  changed; never hand-edit `public/graph.*.json`) → `pnpm exec tsc --noEmit` →
+  `pnpm exec eslint app scripts data` → skim the dev log, since there's no
+  headless render. Commit messages end with the `Co-Authored-By` trailer.
+
 ## Data workflow (source of truth)
 
 - `data/<source>/strains.json` — `{id, name, type, effects[], note?}` records;
@@ -172,9 +187,13 @@ current resting-dim is binary curated-vs-rest — fine for two tiers, worth revi
 `documented` tier returns); a higher-fidelity `documented`-tier source (kushy's
 `crosses` column is sparse; the seam is proven if a better dump appears).
 
-Data-quality + recommender pass (post-Phase-4): effects are partitioned into
-desirable vs `negatives` (see *Data workflow*); the recommender gained type
-affinity, an avoid-penalty for side-effects, and richer "why" explanations.
+Data-quality + recommender pass (post-Phase-4, merged to `main` as PR #2):
+effects are partitioned into desirable vs `negatives` (see *Data workflow*); the
+recommender gained type affinity, an avoid-penalty for side-effects, and richer
+"why" explanations. A new **entity-kind axis** (`nameKind`) classifies named
+cultivars vs `cross`-expression nodes — orthogonal to the trust/provenance axis —
+driving a gentle recommender down-weight + a subtle 2D resting de-emphasis (see
+*Entity-kind* under *Data workflow*; 435/1224 union nodes are `cross`).
 Cross-source identity is reconciled by name at union time (see *Multi-source*).
 
 **Deferred enhancement — curated improvements & source reviews:** thickening the
