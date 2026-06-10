@@ -62,12 +62,19 @@ Principle: **separate at rest, unified at view-time.**
   client (`AVAILABLE_SOURCES` feeds the dropdown). Add a source here.
 - **Adapters** (`scripts/adapters/`): the `SourceAdapter` contract is the
   standardized input point — `load()` returns canonical `{strains, lineage}`, and
-  everything downstream is free. `curated.ts` is identity; `leafly.ts`
-  (`makeLeaflyAdapter(id, dir)`) normalizes a raw scrape then applies a patch.
+  everything downstream is free. `curated.ts` is identity; `kushy.ts`
+  (`makeKushyAdapter(id, dir)`) is the live crowd adapter — it parses the kushy
+  CSV scrape, **recovers lineage encoded in strain names** (`"A x B"` → edges to
+  the existing A and B rows), and **de-dups strain identity** (exact-name
+  collisions auto-merge; declared aliases fold abbreviations like `Sour D` →
+  `Sour Diesel`) before its patch, keeping the result a DAG by construction.
+  `leafly.ts` (`makeLeaflyAdapter`) remains as a reference Leafly-shaped seam.
 - **Massaging discipline:** a scraped source keeps `data/<id>/raw/` (never
   hand-edited, re-scrapeable) + `data/<id>/patch.json` (declared
-  drop/override/add ops). Hand-fixes stay a reviewable diff. See
-  `data/expanded-demo/` for the worked example.
+  drop/override/add/**alias** ops). Hand-fixes stay a reviewable diff. Identity
+  principle: a **node is an identity, an edge is kinship** — merge same-strain
+  spellings, never merge distinct-but-related strains (NYC Diesel ≠ Sour Diesel).
+  See `data/kushy/` for the worked example (the crowd source).
 - **Union (`all`):** `mergeSources()` folds sources in trust order with
   **curated-wins precedence** (first writer of an id/edge wins) and stamps each
   node's true origin; output is `public/graph.all.json`. It only appears in the
@@ -124,8 +131,11 @@ Phases 0–4 complete: scaffold, curated data + build pipeline, explorer UX
 *Multi-source* above and `docs/phase-4-plan.md`). See commit history (detailed
 messages) for the full arc.
 
-Phase 4 follow-ups not yet done: mount `SourcePanel` in the 3D view (deliberate
-3D checkpoint item — switching already works there via the shared hook, just no
-UI); a real Leafly source (the `expanded-demo` sample proves the seam — swap in a
-real dump/adapter); the `crowd` tier; richer per-source coloring / a provenance
-legend beyond the current resting-dim.
+Phase 4 follow-ups: the **`crowd` tier is live** — `kushy` (a ~9.5k-strain
+community CSV scrape) compiles to a 1.2k-node connected lineage graph via
+name-mining + identity de-dup; it replaced the old `expanded-demo` sample. Still
+open: mount `SourcePanel` in the 3D view (deliberate 3D checkpoint item —
+switching already works there via the shared hook, just no UI); richer
+per-source coloring / a provenance legend beyond the current resting-dim; a
+higher-fidelity `documented`-tier source (kushy's `crosses` column is sparse;
+the seam is proven if a better dump appears).

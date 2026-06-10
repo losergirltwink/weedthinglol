@@ -43,20 +43,27 @@ data/
   curated/
     strains.json          <- moved from data/strains.json (unchanged content)
     lineage.json          <- moved from data/lineage.json
-  expanded-demo/          <- SAMPLE source (~15 strains), proves the pipeline
-    raw/leafly-sample.json
-    patch.json            <- overrides layered over raw
+  kushy/                  <- CROWD source: ~9.5k-strain community CSV scrape
+    raw/strains-kushy_api.2017-11-14.csv
+    patch.json            <- drop/override/add/alias ops layered over raw
 scripts/
   adapters/
     types.ts              <- SourceAdapter contract
     curated.ts            <- identity: canonical JSON straight through
-    leafly.ts             <- normalize raw + apply patch -> canonical (used by expanded-demo)
+    kushy.ts              <- CSV parse + name-mining + identity de-dup -> canonical
+    leafly.ts             <- reference Leafly-shaped seam (normalize raw + patch)
   build-graph.ts          <- loops sources -> per-source graphs + union
 public/
   graph.curated.json
-  graph.expanded-demo.json
+  graph.kushy.json
   graph.all.json
 ```
+
+> Update (post-Phase-4): the `expanded-demo` sample that originally proved this
+> pipeline has been retired in favor of `kushy`, a real crowd-tier source. The
+> kushy adapter adds two massaging steps beyond the sketch below — it recovers
+> lineage from strain names (`"A x B"`) and de-dups strain identity (exact-name
+> merges + declared `aliases`) — keeping the graph a DAG by construction.
 
 `data/sources.ts` is the single registry, imported by both the build (to know
 what to compile) and the client (to populate the dropdown). No generated
