@@ -83,7 +83,7 @@ export function DetailPanel({ graph, id, onSelect, onClose }: Props) {
         </div>
       )}
 
-      {attrs.negatives.length > 0 && (
+      {(attrs.negatives ?? []).length > 0 && (
         <div className="mt-2">
           <p className="mb-1 text-xs font-medium uppercase tracking-wide text-amber-600/80">
             May cause

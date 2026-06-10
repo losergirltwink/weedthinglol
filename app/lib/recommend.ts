@@ -12,28 +12,43 @@ import type { StrainGraphType } from "./graph-utils";
 export interface Recommendation {
   id: string;
   label: string;
-  /** Blended 0..1 score used for ranking. */
+  /** Blended 0..1 score used for ranking (after negative penalties). */
   score: number;
-  /** Jaccard overlap of effects, 0..1. */
+  /** Jaccard overlap of desirable effects, 0..1. */
   effectScore: number;
   /** Graph-proximity component, 0..1 (0 when in effects-only mode). */
   lineageScore: number;
   /** Effects shared with the target profile. */
   sharedEffects: string[];
+  /** Candidate's side-effects — shown muted, and the basis for avoid penalties. */
+  negatives: string[];
+  /** Hop distance from the seed across lineage; null in effects-only mode. */
+  distance: number | null;
+  /** Which signal drove the match, for a plain-language "why". */
+  driver: "effect" | "lineage" | "both";
   /** Nearest shared ancestor (the "why they're related"), seed mode only. */
   commonAncestor: { id: string; label: string } | null;
 }
 
-const DEFAULT_EFFECT_WEIGHT = 0.65;
-const DEFAULT_LINEAGE_WEIGHT = 0.35;
+// Seed mode blends three signals; effects-only mode collapses to effects alone.
+const DEFAULT_EFFECT_WEIGHT = 0.6;
+const DEFAULT_LINEAGE_WEIGHT = 0.3;
+const DEFAULT_TYPE_WEIGHT = 0.1; // a gentle nudge toward the seed's strain type
+
+// Side-effect penalties (multiplicative, so they only ever shrink a score).
+const AVOID_PENALTY = 0.45; // per explicitly-avoided side-effect a candidate carries
+const NEW_NEGATIVE_PENALTY = 0.2; // per side-effect the candidate adds that the seed lacked
 
 interface RecommendOpts {
-  /** A strain to find neighbors of. Enables the lineage component. */
+  /** A strain to find neighbors of. Enables the lineage + type components. */
   seedId?: string | null;
   /** Explicit desired effects. Defaults to the seed strain's effects. */
   effects?: Iterable<string>;
+  /** Side-effects to steer away from — candidates carrying them are penalized. */
+  avoid?: Iterable<string>;
   effectWeight?: number;
   lineageWeight?: number;
+  typeWeight?: number;
   limit?: number;
 }
 
@@ -48,15 +63,25 @@ export function recommend(
   const targetEffects = new Set<string>(
     opts.effects ?? (hasSeed ? graph.getNodeAttribute(seedId!, "effects") : []),
   );
+  const avoid = new Set<string>(
+    [...(opts.avoid ?? [])].map((e) => e.trim().toLowerCase()),
+  );
+  const seedType = hasSeed ? graph.getNodeAttribute(seedId!, "strainType") : null;
+  // A strain you like, you've accepted its side-effects; only NEW ones count.
+  const seedNegatives = new Set<string>(
+    hasSeed ? graph.getNodeAttribute(seedId!, "negatives") : [],
+  );
 
-  // Effects-only discovery has no seed, so it can't use lineage proximity.
+  // Effects-only discovery has no seed, so it can't use lineage or type.
   let effectWeight = opts.effectWeight ?? DEFAULT_EFFECT_WEIGHT;
   let lineageWeight = opts.lineageWeight ?? DEFAULT_LINEAGE_WEIGHT;
+  let typeWeight = opts.typeWeight ?? DEFAULT_TYPE_WEIGHT;
   if (!hasSeed) {
     effectWeight = 1;
     lineageWeight = 0;
+    typeWeight = 0;
   }
-  const weightSum = effectWeight + lineageWeight || 1;
+  const weightSum = effectWeight + lineageWeight + typeWeight || 1;
 
   const distances = hasSeed ? distancesFrom(graph, seedId!) : null;
 
@@ -71,10 +96,33 @@ export function recommend(
 
     const dist = distances?.get(id);
     const lineageScore = dist == null || dist === 0 ? 0 : 1 / (1 + dist);
+    const typeMatch = hasSeed && attrs.strainType === seedType ? 1 : 0;
 
-    const score =
-      (effectWeight * effectScore + lineageWeight * lineageScore) / weightSum;
+    let score =
+      (effectWeight * effectScore +
+        lineageWeight * lineageScore +
+        typeWeight * typeMatch) /
+      weightSum;
+
+    // Side-effect penalties shrink the blended score. Explicitly-avoided effects
+    // hit hard; side-effects the candidate adds beyond the seed's hit gently.
+    const negatives = attrs.negatives ?? [];
+    if (avoid.size) {
+      const hits = negatives.reduce((n, e) => n + (avoid.has(e) ? 1 : 0), 0);
+      if (hits) score *= AVOID_PENALTY ** hits;
+    }
+    if (hasSeed) {
+      const added = negatives.reduce((n, e) => n + (seedNegatives.has(e) ? 0 : 1), 0);
+      if (added) score *= 1 / (1 + NEW_NEGATIVE_PENALTY * added);
+    }
+
     if (score <= 0) return;
+
+    // Plain-language "why": which signal actually carried this pick.
+    const byEffect = effectScore > 0;
+    const byLineage = lineageScore > 0;
+    const driver: Recommendation["driver"] =
+      byEffect && byLineage ? "both" : byLineage ? "lineage" : "effect";
 
     recs.push({
       id,
@@ -83,6 +131,9 @@ export function recommend(
       effectScore,
       lineageScore,
       sharedEffects: shared,
+      negatives,
+      distance: dist ?? null,
+      driver,
       commonAncestor: hasSeed
         ? nearestCommonAncestor(graph, seedId!, id)
         : null,
@@ -93,10 +144,17 @@ export function recommend(
   return recs.slice(0, limit);
 }
 
-/** Every distinct effect tag in the graph, sorted — for the effect picker. */
+/** Every distinct desirable-effect tag in the graph, sorted — for the effect picker. */
 export function allEffects(graph: StrainGraphType): string[] {
   const set = new Set<string>();
   graph.forEachNode((_, attrs) => attrs.effects.forEach((e) => set.add(e)));
+  return [...set].sort();
+}
+
+/** Every distinct side-effect tag in the graph, sorted — for the avoid picker. */
+export function negativeEffects(graph: StrainGraphType): string[] {
+  const set = new Set<string>();
+  graph.forEachNode((_, attrs) => (attrs.negatives ?? []).forEach((e) => set.add(e)));
   return [...set].sort();
 }
 
