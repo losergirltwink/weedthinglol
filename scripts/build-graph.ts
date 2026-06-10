@@ -18,22 +18,29 @@ import { resolve } from "node:path";
 import { DirectedGraph } from "graphology";
 import forceAtlas2 from "graphology-layout-forceatlas2";
 
-import type { Strain, Lineage } from "../app/lib/strains";
+import type { Strain, Lineage, Confidence } from "../app/lib/strains";
 import { TYPE_COLORS } from "../app/lib/strains";
-import { SOURCES, DEFAULT_SOURCE, type SourceDef } from "../data/sources";
+import { SOURCES, ALL_SOURCE, DEFAULT_SOURCE, type SourceDef } from "../data/sources";
 import { adapterFor } from "./adapters";
 
 const ROOT = process.cwd();
 
+/** Where a baked node came from — its origin source id and trust tier. */
+interface Provenance {
+  source: string;
+  confidence: Confidence;
+}
+
 /**
- * Compile one source's canonical records into a serialized, laid-out graph.
- * Pure aside from logging — returns the export plus any validation errors so the
- * caller decides whether to fail the overall build.
+ * Compile canonical records into a serialized, laid-out graph. Provenance is
+ * resolved per node (`provenanceFor`) so the union can carry each node's true
+ * origin rather than a uniform tag. Pure aside from logging — returns the export
+ * plus any validation errors so the caller decides whether to fail the build.
  */
 function compile(
   strains: Strain[],
   lineage: Lineage[],
-  source: SourceDef,
+  provenanceFor: (id: string) => Provenance,
 ): { graph: DirectedGraph; errors: string[]; maxGen: number } {
   const errors: string[] = [];
   const graph = new DirectedGraph();
@@ -146,6 +153,7 @@ function compile(
   graph.forEachNode((node, attrs) => {
     const gen = generation(node);
     const desc = descendants(node);
+    const prov = provenanceFor(node);
     graph.mergeNodeAttributes(node, {
       generation: gen,
       descendants: desc,
@@ -153,8 +161,8 @@ function compile(
       size: 4 + Math.sqrt(desc) * 3,
       color: TYPE_COLORS[attrs.strainType as keyof typeof TYPE_COLORS] ?? "#9ca3af",
       // Provenance: which source contributed this node, and its trust tier.
-      source: source.id,
-      confidence: source.confidence,
+      source: prov.source,
+      confidence: prov.confidence,
     });
   });
 
@@ -202,32 +210,85 @@ function compile(
   return { graph, errors, maxGen };
 }
 
+/**
+ * Merge all sources into one canonical dataset with curated-wins precedence.
+ * SOURCES is ordered by trust, so the FIRST writer of an id/edge wins: a scrape
+ * only fills gaps the curated tier leaves, never overwrites it. Each surviving
+ * node records the source it actually came from.
+ */
+function mergeSources(sources: SourceDef[]): {
+  strains: Strain[];
+  lineage: Lineage[];
+  origin: Map<string, Provenance>;
+} {
+  const strainById = new Map<string, Strain>();
+  const origin = new Map<string, Provenance>();
+  const edgeKeys = new Set<string>();
+  const lineage: Lineage[] = [];
+
+  for (const src of sources) {
+    const data = adapterFor(src.id).load();
+    for (const s of data.strains) {
+      if (strainById.has(s.id)) continue; // higher-precedence source already won
+      strainById.set(s.id, s);
+      origin.set(s.id, { source: src.id, confidence: src.confidence });
+    }
+    for (const e of data.lineage) {
+      const key = `${e.parent}->${e.child}`;
+      if (edgeKeys.has(key)) continue;
+      edgeKeys.add(key);
+      lineage.push(e);
+    }
+  }
+
+  return { strains: [...strainById.values()], lineage, origin };
+}
+
 // ---------------------------------------------------------------------------
-// Drive every registered source; collect failures and exit once at the end.
+// Drive every registered source plus the union; collect failures, exit once.
 // ---------------------------------------------------------------------------
 mkdirSync(resolve(ROOT, "public"), { recursive: true });
 
 const allErrors: string[] = [];
-for (const source of SOURCES) {
-  const { strains, lineage } = adapterFor(source.id).load();
-  const { graph, errors, maxGen } = compile(strains, lineage, source);
+
+/** Compile + write public/graph.<outId>.json, accumulating validation errors. */
+function emit(
+  outId: string,
+  strains: Strain[],
+  lineage: Lineage[],
+  provenanceFor: (id: string) => Provenance,
+  { alsoBare = false }: { alsoBare?: boolean } = {},
+): void {
+  const { graph, errors, maxGen } = compile(strains, lineage, provenanceFor);
 
   if (errors.length) {
-    allErrors.push(`[${source.id}] ${errors.length} error(s):`);
+    allErrors.push(`[${outId}] ${errors.length} error(s):`);
     for (const e of errors) allErrors.push(`  - ${e}`);
-    continue;
+    return;
   }
 
   const serialized = JSON.stringify(graph.export(), null, 2);
-  writeFileSync(resolve(ROOT, `public/graph.${source.id}.json`), serialized);
+  writeFileSync(resolve(ROOT, `public/graph.${outId}.json`), serialized);
   // Back-compat: the client still fetches /graph.json until step 4 flips it to
   // the per-source path. Mirror the default source there for now.
-  if (source.id === DEFAULT_SOURCE) {
-    writeFileSync(resolve(ROOT, "public/graph.json"), serialized);
-  }
+  if (alsoBare) writeFileSync(resolve(ROOT, "public/graph.json"), serialized);
   console.log(
-    `✓ graph.${source.id}.json — ${graph.order} strains, ${graph.size} lineage edges, max depth ${maxGen}.`,
+    `✓ graph.${outId}.json — ${graph.order} strains, ${graph.size} lineage edges, max depth ${maxGen}.`,
   );
+}
+
+// Per-source builds (uniform provenance — every node is from this source).
+for (const source of SOURCES) {
+  const { strains, lineage } = adapterFor(source.id).load();
+  emit(source.id, strains, lineage, () => ({ source: source.id, confidence: source.confidence }), {
+    alsoBare: source.id === DEFAULT_SOURCE,
+  });
+}
+
+// Union build (per-node provenance from the merge; validated again, incl. cycles).
+{
+  const { strains, lineage, origin } = mergeSources(SOURCES);
+  emit(ALL_SOURCE.id, strains, lineage, (id) => origin.get(id)!);
 }
 
 if (allErrors.length) {
