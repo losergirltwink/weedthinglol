@@ -34,6 +34,10 @@ npm.** Native build deps (sharp, unrs-resolver, esbuild) must stay `true` under
 - `pnpm dev` — dev server (port 3000). Browser console errors are captured in
   `.next/dev/logs/next-development.log` — useful since the renderers are
   client-only and won't surface via `curl`.
+- `pnpm stop` — kill a running dev server (the `next dev` / `next-server` /
+  worker tree). For a server started detached/in the background with no terminal
+  to `Ctrl-C`; no-op (friendly message, exits 0) when nothing is running. Uses
+  the `[n]ext` bracket trick so `pkill` doesn't match its own command line.
 - `pnpm build` — production build / typecheck.
 - `pnpm build:graph` — **regenerate every `public/graph.<source>.json` (+ the
   `all` union) from `data/<source>/`.** Run this after any data edit.
