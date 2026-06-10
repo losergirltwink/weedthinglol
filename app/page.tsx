@@ -15,7 +15,7 @@ export default function Home() {
           🌿 Strain Genealogy
         </h1>
         <p className="mt-1 text-sm text-zinc-400">
-          Phase 0 — dummy graph. Scroll to zoom, drag to pan.
+          45 strains · curated lineage. Scroll to zoom, drag to pan.
         </p>
       </div>
 

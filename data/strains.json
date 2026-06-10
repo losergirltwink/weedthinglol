@@ -1,0 +1,53 @@
+[
+  { "id": "afghani", "name": "Afghani", "type": "landrace", "effects": ["relaxed", "sleepy", "happy"] },
+  { "id": "thai", "name": "Thai", "type": "landrace", "effects": ["energetic", "uplifted", "creative"] },
+  { "id": "colombian-gold", "name": "Colombian Gold", "type": "landrace", "effects": ["uplifted", "happy", "energetic"] },
+  { "id": "acapulco-gold", "name": "Acapulco Gold", "type": "landrace", "effects": ["euphoric", "happy", "energetic"] },
+  { "id": "durban-poison", "name": "Durban Poison", "type": "landrace", "effects": ["energetic", "uplifted", "focused"] },
+  { "id": "hindu-kush", "name": "Hindu Kush", "type": "landrace", "effects": ["relaxed", "sleepy", "happy"] },
+  { "id": "mexican-landrace", "name": "Mexican", "type": "landrace", "effects": ["uplifted", "energetic", "happy"] },
+  { "id": "purple-thai", "name": "Purple Thai", "type": "landrace", "effects": ["creative", "uplifted", "energetic"] },
+  { "id": "south-indian", "name": "South Indian", "type": "landrace", "effects": ["relaxed", "sleepy"] },
+  { "id": "hawaiian", "name": "Hawaiian", "type": "landrace", "effects": ["happy", "uplifted", "energetic"] },
+  { "id": "nepalese", "name": "Nepalese", "type": "landrace", "effects": ["relaxed", "happy", "euphoric"] },
+  { "id": "brazilian", "name": "Brazilian", "type": "landrace", "effects": ["uplifted", "energetic", "creative"] },
+
+  { "id": "chemdawg", "name": "Chemdawg", "type": "hybrid", "effects": ["euphoric", "relaxed", "happy"], "note": "Origin debated; commonly traced to Thai/Nepalese bagseed." },
+  { "id": "purple-urkle", "name": "Purple Urkle", "type": "indica", "effects": ["relaxed", "sleepy", "happy"], "note": "Clone-only; precise origin unverified." },
+  { "id": "blue-power", "name": "Blue Power", "type": "hybrid", "effects": ["relaxed", "happy", "euphoric"] },
+  { "id": "pink-panties", "name": "Pink Panties", "type": "hybrid", "effects": ["relaxed", "happy", "euphoric"] },
+
+  { "id": "skunk-1", "name": "Skunk #1", "type": "hybrid", "effects": ["euphoric", "happy", "uplifted"] },
+  { "id": "northern-lights", "name": "Northern Lights", "type": "indica", "effects": ["relaxed", "sleepy", "happy"] },
+  { "id": "haze", "name": "Haze", "type": "sativa", "effects": ["energetic", "creative", "uplifted"] },
+  { "id": "super-skunk", "name": "Super Skunk", "type": "hybrid", "effects": ["relaxed", "happy", "euphoric"] },
+  { "id": "shiva-skunk", "name": "Shiva Skunk", "type": "indica", "effects": ["relaxed", "euphoric", "happy"] },
+  { "id": "big-bud", "name": "Big Bud", "type": "indica", "effects": ["relaxed", "happy", "sleepy"] },
+
+  { "id": "og-kush", "name": "OG Kush", "type": "hybrid", "effects": ["relaxed", "happy", "euphoric"], "note": "Lineage contested; commonly Chemdawg x Hindu Kush." },
+  { "id": "sour-diesel", "name": "Sour Diesel", "type": "sativa", "effects": ["energetic", "uplifted", "happy"] },
+  { "id": "bubba-kush", "name": "Bubba Kush", "type": "indica", "effects": ["relaxed", "sleepy", "happy"], "note": "Indica parent unverified; descends from OG Kush." },
+  { "id": "master-kush", "name": "Master Kush", "type": "indica", "effects": ["relaxed", "happy", "sleepy"] },
+  { "id": "triangle-kush", "name": "Triangle Kush", "type": "hybrid", "effects": ["relaxed", "euphoric", "happy"], "note": "Florida OG Kush phenotype." },
+
+  { "id": "blueberry", "name": "Blueberry", "type": "indica", "effects": ["relaxed", "happy", "sleepy"] },
+  { "id": "blue-dream", "name": "Blue Dream", "type": "hybrid", "effects": ["happy", "relaxed", "uplifted"] },
+  { "id": "granddaddy-purple", "name": "Granddaddy Purple", "type": "indica", "effects": ["relaxed", "sleepy", "happy"] },
+  { "id": "cherry-pie", "name": "Cherry Pie", "type": "hybrid", "effects": ["relaxed", "happy", "euphoric"] },
+
+  { "id": "girl-scout-cookies", "name": "Girl Scout Cookies", "type": "hybrid", "effects": ["happy", "euphoric", "relaxed"] },
+  { "id": "thin-mint-gsc", "name": "Thin Mint GSC", "type": "hybrid", "effects": ["euphoric", "relaxed", "happy"], "note": "Phenotype of Girl Scout Cookies." },
+  { "id": "sunset-sherbet", "name": "Sunset Sherbet", "type": "hybrid", "effects": ["happy", "relaxed", "uplifted"] },
+  { "id": "gelato", "name": "Gelato", "type": "hybrid", "effects": ["relaxed", "euphoric", "happy"] },
+  { "id": "animal-mints", "name": "Animal Mints", "type": "hybrid", "effects": ["relaxed", "happy", "euphoric"] },
+  { "id": "wedding-cake", "name": "Wedding Cake", "type": "indica", "effects": ["relaxed", "happy", "euphoric"] },
+
+  { "id": "jack-herer", "name": "Jack Herer", "type": "sativa", "effects": ["energetic", "uplifted", "creative"] },
+  { "id": "white-widow", "name": "White Widow", "type": "hybrid", "effects": ["euphoric", "energetic", "happy"] },
+  { "id": "ak-47", "name": "AK-47", "type": "hybrid", "effects": ["relaxed", "happy", "uplifted"] },
+  { "id": "trainwreck", "name": "Trainwreck", "type": "sativa", "effects": ["euphoric", "uplifted", "energetic"] },
+  { "id": "pineapple-express", "name": "Pineapple Express", "type": "hybrid", "effects": ["happy", "uplifted", "energetic"] },
+  { "id": "amnesia-haze", "name": "Amnesia Haze", "type": "sativa", "effects": ["euphoric", "uplifted", "energetic"] },
+  { "id": "green-crack", "name": "Green Crack", "type": "sativa", "effects": ["energetic", "focused", "happy"], "note": "Descends from Skunk #1." },
+  { "id": "headband", "name": "Headband", "type": "hybrid", "effects": ["relaxed", "happy", "euphoric"] }
+]

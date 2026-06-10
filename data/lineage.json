@@ -1,0 +1,96 @@
+[
+  { "parent": "thai", "child": "chemdawg" },
+  { "parent": "nepalese", "child": "chemdawg" },
+
+  { "parent": "afghani", "child": "skunk-1" },
+  { "parent": "acapulco-gold", "child": "skunk-1" },
+  { "parent": "colombian-gold", "child": "skunk-1" },
+
+  { "parent": "afghani", "child": "northern-lights" },
+  { "parent": "thai", "child": "northern-lights" },
+
+  { "parent": "colombian-gold", "child": "haze" },
+  { "parent": "acapulco-gold", "child": "haze" },
+  { "parent": "thai", "child": "haze" },
+  { "parent": "south-indian", "child": "haze" },
+
+  { "parent": "skunk-1", "child": "super-skunk" },
+  { "parent": "afghani", "child": "super-skunk" },
+
+  { "parent": "northern-lights", "child": "shiva-skunk" },
+  { "parent": "skunk-1", "child": "shiva-skunk" },
+
+  { "parent": "afghani", "child": "big-bud" },
+  { "parent": "skunk-1", "child": "big-bud" },
+  { "parent": "northern-lights", "child": "big-bud" },
+
+  { "parent": "chemdawg", "child": "og-kush" },
+  { "parent": "hindu-kush", "child": "og-kush" },
+
+  { "parent": "chemdawg", "child": "sour-diesel" },
+  { "parent": "super-skunk", "child": "sour-diesel" },
+
+  { "parent": "og-kush", "child": "bubba-kush" },
+
+  { "parent": "hindu-kush", "child": "master-kush" },
+  { "parent": "skunk-1", "child": "master-kush" },
+
+  { "parent": "og-kush", "child": "triangle-kush" },
+
+  { "parent": "afghani", "child": "blueberry" },
+  { "parent": "thai", "child": "blueberry" },
+  { "parent": "purple-thai", "child": "blueberry" },
+
+  { "parent": "blueberry", "child": "blue-dream" },
+  { "parent": "haze", "child": "blue-dream" },
+
+  { "parent": "purple-urkle", "child": "granddaddy-purple" },
+  { "parent": "big-bud", "child": "granddaddy-purple" },
+
+  { "parent": "granddaddy-purple", "child": "cherry-pie" },
+  { "parent": "durban-poison", "child": "cherry-pie" },
+
+  { "parent": "og-kush", "child": "girl-scout-cookies" },
+  { "parent": "durban-poison", "child": "girl-scout-cookies" },
+
+  { "parent": "girl-scout-cookies", "child": "thin-mint-gsc" },
+
+  { "parent": "girl-scout-cookies", "child": "sunset-sherbet" },
+  { "parent": "pink-panties", "child": "sunset-sherbet" },
+
+  { "parent": "sunset-sherbet", "child": "gelato" },
+  { "parent": "thin-mint-gsc", "child": "gelato" },
+
+  { "parent": "girl-scout-cookies", "child": "animal-mints" },
+  { "parent": "blue-power", "child": "animal-mints" },
+
+  { "parent": "triangle-kush", "child": "wedding-cake" },
+  { "parent": "animal-mints", "child": "wedding-cake" },
+
+  { "parent": "haze", "child": "jack-herer" },
+  { "parent": "northern-lights", "child": "jack-herer" },
+  { "parent": "shiva-skunk", "child": "jack-herer" },
+
+  { "parent": "brazilian", "child": "white-widow" },
+  { "parent": "south-indian", "child": "white-widow" },
+
+  { "parent": "colombian-gold", "child": "ak-47" },
+  { "parent": "mexican-landrace", "child": "ak-47" },
+  { "parent": "thai", "child": "ak-47" },
+  { "parent": "afghani", "child": "ak-47" },
+
+  { "parent": "mexican-landrace", "child": "trainwreck" },
+  { "parent": "thai", "child": "trainwreck" },
+  { "parent": "afghani", "child": "trainwreck" },
+
+  { "parent": "trainwreck", "child": "pineapple-express" },
+  { "parent": "hawaiian", "child": "pineapple-express" },
+
+  { "parent": "haze", "child": "amnesia-haze" },
+  { "parent": "afghani", "child": "amnesia-haze" },
+
+  { "parent": "skunk-1", "child": "green-crack" },
+
+  { "parent": "og-kush", "child": "headband" },
+  { "parent": "sour-diesel", "child": "headband" }
+]
