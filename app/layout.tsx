@@ -25,6 +25,10 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      // Browser extensions (e.g. Dark Reader) inject attributes onto <html>
+      // before React hydrates, causing a benign top-level hydration mismatch.
+      // Suppress only that — real mismatches inside components still warn.
+      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
