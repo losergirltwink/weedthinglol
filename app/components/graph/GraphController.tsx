@@ -41,6 +41,8 @@ interface Props {
   /** Union view: mute non-curated nodes at rest so the verified core stands out. */
   dimLowConfidence: boolean;
   onSelect: (id: string | null) => void;
+  /** Fired when the WebGL context is lost, so the parent can remount Sigma. */
+  onContextLost: () => void;
 }
 
 export function GraphController({
@@ -51,6 +53,7 @@ export function GraphController({
   activeTypes,
   dimLowConfidence,
   onSelect,
+  onContextLost,
 }: Props) {
   const sigma = useSigma();
   const loadGraph = useLoadGraph();
@@ -62,6 +65,24 @@ export function GraphController({
   useEffect(() => {
     loadGraph(graph);
   }, [loadGraph, graph]);
+
+  // WebGL context loss (GPU reclaim, tab backgrounding, large scenes on weak
+  // GPUs) leaves Sigma's canvases frozen/ghosted. preventDefault keeps the
+  // canvas eligible for restoration, then we ask the parent to remount Sigma —
+  // a fresh instance gets a new context and reloads the graph cleanly, which is
+  // far more reliable than rebuilding Sigma's context-bound GL programs in place.
+  useEffect(() => {
+    const canvases = Array.from(
+      sigma.getContainer().querySelectorAll("canvas"),
+    );
+    const onLost = (e: Event) => {
+      e.preventDefault();
+      onContextLost();
+    };
+    canvases.forEach((c) => c.addEventListener("webglcontextlost", onLost));
+    return () =>
+      canvases.forEach((c) => c.removeEventListener("webglcontextlost", onLost));
+  }, [sigma, onContextLost]);
 
   // Wire interactions.
   useEffect(() => {
