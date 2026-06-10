@@ -38,6 +38,10 @@ const DEFAULT_TYPE_WEIGHT = 0.1; // a gentle nudge toward the seed's strain type
 // Side-effect penalties (multiplicative, so they only ever shrink a score).
 const AVOID_PENALTY = 0.45; // per explicitly-avoided side-effect a candidate carries
 const NEW_NEGATIVE_PENALTY = 0.2; // per side-effect the candidate adds that the seed lacked
+// Cross-expression nodes ("Blueberry x Haze") aren't named cultivars you can go
+// find — gently down-weight them as targets so named strains rise, without
+// hiding a strong cross entirely.
+const CROSS_TARGET_PENALTY = 0.6;
 
 interface RecommendOpts {
   /** A strain to find neighbors of. Enables the lineage + type components. */
@@ -115,6 +119,8 @@ export function recommend(
       const added = negatives.reduce((n, e) => n + (seedNegatives.has(e) ? 0 : 1), 0);
       if (added) score *= 1 / (1 + NEW_NEGATIVE_PENALTY * added);
     }
+    // A cross-expression target is connective tissue, not a strain to seek out.
+    if (attrs.nameKind === "cross") score *= CROSS_TARGET_PENALTY;
 
     if (score <= 0) return;
 

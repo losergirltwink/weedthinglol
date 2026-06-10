@@ -49,14 +49,25 @@ npm.** Native build deps (sharp, unrs-resolver, esbuild) must stay `true` under
 - `scripts/build-graph.ts` runs each registered source through its adapter, then
   `compile()`: validates (dup ids, dangling refs, self-loops, dup edges, **cycle
   detection** — per source) → computes `generation` + `descendants` → bakes
-  color/size/**provenance** → ForceAtlas2 → exports `public/graph.<source>.json`.
-  It also builds the `all` union (see below).
+  color/size/**provenance**/**entity-kind** → ForceAtlas2 → exports
+  `public/graph.<source>.json`. It also builds the `all` union (see below).
 - **Effect partition:** `compile()` splits each strain's `effects` against
   `NEGATIVE_EFFECTS` (strains.ts) into desirable `effects` + side-effect
   `negatives` (e.g. dry mouth, paranoid). Source-agnostic — curated has no
   negatives; crowd data mixes both in one list. This keeps effect-similarity from
   matching on shared side-effects and feeds the recommender's avoid-penalty +
   `DetailPanel`'s "May cause" group. Add new side-effects to `NEGATIVE_EFFECTS`.
+- **Entity-kind (`nameKind`):** `compile()` classifies each node `named` vs
+  `cross` (`classifyNameKind`). A `cross`-expression is a node whose NAME is a
+  cross formula (`A x B`, split on the shared `CROSS_SPLIT` from the kushy adapter)
+  **and** whose parents structurally corroborate it (in-degree ≥ component count)
+  — connective tissue between parents we already have, not a named cultivar.
+  Requiring corroboration ("approach 2") is also a precision guard: it refuses to
+  tag parse-noise like `XXX OG (Triple X OG)`. Curated names are never cross-
+  shaped, so curated is always `named`. Drives the recommender's cross
+  down-weight + a subtle 2D resting de-emphasis (cross nodes shrink + drop their
+  label at rest, lifted on select/hover). The build logs `entity-kind: tagged /
+  cross-shaped (stragglers)` per graph.
 
 ## Multi-source (Phase 4)
 
@@ -108,9 +119,10 @@ Principle: **separate at rest, unified at view-time.**
 - `app/lib/recommend.ts` — scoring: Jaccard overlap of **desirable** effects +
   undirected lineage proximity + a gentle same-`strainType` nudge, minus
   side-effect penalties (explicitly-avoided effects hit hard; side-effects a
-  candidate adds beyond the seed's hit gently). Explanations carry shared-effect
-  count, nearest common ancestor, hop distance, and the driving signal.
-  Renderer-agnostic.
+  candidate adds beyond the seed's hit gently) and a gentle **cross-expression
+  down-weight** (a `cross` node is connective tissue, not a strain to seek out).
+  Explanations carry shared-effect count, nearest common ancestor, hop distance,
+  and the driving signal. Renderer-agnostic.
 - `app/lib/useStrainExplorer.ts` — **headless orchestration hook shared by both
   renderers.** Owns the active **source** (fetches `/graph.<source>.json`),
   graph load, selection, type filters, recommendations, and the derived

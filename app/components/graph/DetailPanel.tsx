@@ -54,6 +54,17 @@ export function DetailPanel({ graph, id, onSelect, onClose }: Props) {
         <span>gen {attrs.generation}</span>
         <span className="text-zinc-600">·</span>
         <span>{attrs.descendants} descendants</span>
+        {attrs.nameKind === "cross" && (
+          <>
+            <span className="text-zinc-600">·</span>
+            <span
+              className="text-zinc-500"
+              title="Cross-expression: this node's name is a cross of two strains already in the graph, rather than a named cultivar."
+            >
+              cross
+            </span>
+          </>
+        )}
       </div>
 
       {showProvenance && meta && (

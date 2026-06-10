@@ -85,7 +85,7 @@ export const normalizeName = (name: string): string =>
 // "A / B". Note: " by " is deliberately excluded — "Super Glue by NOTA" names a
 // breeder, not a parent. The x/× forms require surrounding whitespace so we
 // never split mid-word (e.g. "Maxx").
-const CROSS_SPLIT = /\s+[x×]\s+|\s*\/\s*/i;
+export const CROSS_SPLIT = /\s+[x×]\s+|\s*\/\s*/i;
 
 /** Minimal RFC4180 parser: quoted fields, "" escapes, embedded commas/newlines. */
 function parseCsv(text: string): string[][] {

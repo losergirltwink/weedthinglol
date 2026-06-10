@@ -58,6 +58,12 @@ export interface StrainNodeAttributes {
   effects: string[];
   // Side-effects to avoid (dry mouth, paranoid, …); empty for curated data.
   negatives: string[];
+  // Entity-kind (derived at bake time): a `named` cultivar vs a `cross`-
+  // expression node whose name is literally a cross formula ("A x B") with both
+  // parents present in the graph — connective tissue rather than a named strain.
+  // Curated nodes are always `named`. Drives a recommender down-weight + a
+  // subtle 2D resting de-emphasis. See classifyNameKind in build-graph.ts.
+  nameKind: "named" | "cross";
   note?: string;
   generation: number;
   descendants: number;

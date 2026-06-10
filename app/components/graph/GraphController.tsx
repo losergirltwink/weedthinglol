@@ -148,15 +148,26 @@ export function GraphController({
         }
         const emphasized = relevantSet !== null || hoverSet !== null;
         const isRecommended = highlightSet?.has(node) ?? false;
-        // In the union, non-curated nodes recede at rest (until you select or
-        // hover) so the verified curated core reads as primary.
+        // At rest (nothing selected/hovered) two de-emphasis channels apply, both
+        // lifted the moment you engage the graph so exploration shows everything:
+        //   • union view mutes non-curated nodes so the verified core dominates;
+        //   • cross-expression nodes ("A x B") shrink + drop their label so the
+        //     named-cultivar backbone reads clearly (they're connective tissue).
         const restingLowConf =
           dimLowConfidence && !emphasized && data.confidence !== "curated";
+        const restingCross = !emphasized && data.nameKind === "cross";
+        let color = data.color ?? DIM_NODE;
+        let size = data.size ?? 1;
+        if (restingLowConf) {
+          color = mute(color, 0.5);
+          size *= 0.7;
+        }
+        if (restingCross) size *= 0.85;
         return {
           ...data,
-          ...(restingLowConf
-            ? { color: mute(data.color ?? DIM_NODE, 0.5), size: (data.size ?? 1) * 0.7 }
-            : {}),
+          color,
+          size,
+          ...(restingCross ? { label: "" } : {}),
           zIndex: node === selectedId ? 3 : isRecommended ? 2 : 1,
           forceLabel: emphasized || undefined,
           highlighted: node === selectedId,

@@ -22,7 +22,7 @@ import type { Strain, Lineage, Confidence } from "../app/lib/strains";
 import { TYPE_COLORS, isNegativeEffect } from "../app/lib/strains";
 import { SOURCES, ALL_SOURCE, type SourceDef } from "../data/sources";
 import { adapterFor } from "./adapters";
-import { normalizeName } from "./adapters/kushy";
+import { normalizeName, CROSS_SPLIT } from "./adapters/kushy";
 
 const ROOT = process.cwd();
 
@@ -30,6 +30,28 @@ const ROOT = process.cwd();
 interface Provenance {
   source: string;
   confidence: Confidence;
+}
+
+/**
+ * Entity-kind classification (approach 2: "require resolved parents"). A node is
+ * a `cross` expression only when its NAME is a cross formula ("A x B") AND every
+ * component already produced a parent edge — i.e. it's genuine connective tissue
+ * between parents we have, not a named cultivar that merely contains an "x".
+ *
+ * "Resolved" is counted STRUCTURALLY (in-degree ≥ component count), not by
+ * re-matching component text against parent labels: the adapter already resolved
+ * aliases/abbreviations when it built the edges ("GSC" → Girl Scout Cookies,
+ * "G13" → G-13), so re-matching here with a weaker matcher would wrongly miss
+ * those. Cross-shaped names still short a parent stay `named` (reported as
+ * "stragglers"). Curated names are never cross-shaped.
+ */
+function classifyNameKind(
+  name: string,
+  inDegree: number,
+): { kind: "named" | "cross"; shaped: boolean } {
+  const parts = name.split(CROSS_SPLIT).map((p) => p.trim()).filter(Boolean);
+  if (parts.length < 2) return { kind: "named", shaped: false };
+  return { kind: inDegree >= parts.length ? "cross" : "named", shaped: true };
 }
 
 /**
@@ -158,21 +180,36 @@ function compile(
   // -------------------------------------------------------------------------
   // 4. Bake presentation attributes + provenance
   // -------------------------------------------------------------------------
+  let crossShaped = 0;
+  let crossTagged = 0;
   graph.forEachNode((node, attrs) => {
     const gen = generation(node);
     const desc = descendants(node);
     const prov = provenanceFor(node);
+    const nameKind = classifyNameKind(attrs.label as string, graph.inDegree(node));
+    if (nameKind.shaped) {
+      crossShaped++;
+      if (nameKind.kind === "cross") crossTagged++;
+    }
     graph.mergeNodeAttributes(node, {
       generation: gen,
       descendants: desc,
       // Influence-scaled size: roots of big families render larger.
       size: 4 + Math.sqrt(desc) * 3,
       color: TYPE_COLORS[attrs.strainType as keyof typeof TYPE_COLORS] ?? "#9ca3af",
+      // Entity-kind: named cultivar vs cross-expression (see classifyNameKind).
+      nameKind: nameKind.kind,
       // Provenance: which source contributed this node, and its trust tier.
       source: prov.source,
       confidence: prov.confidence,
     });
   });
+  if (crossShaped > 0) {
+    console.log(
+      `  ↳ entity-kind: ${crossTagged}/${crossShaped} cross-shaped name(s) tagged \`cross\` ` +
+        `(${crossShaped - crossTagged} straggler(s): cross-shaped but not all parents resolved).`,
+    );
+  }
 
   graph.forEachEdge((edge) => {
     graph.mergeEdgeAttributes(edge, { size: 1.5, color: "#374151", type: "arrow" });
