@@ -76,9 +76,15 @@ Principle: **separate at rest, unified at view-time.**
   spellings, never merge distinct-but-related strains (NYC Diesel ≠ Sour Diesel).
   See `data/kushy/` for the worked example (the crowd source).
 - **Union (`all`):** `mergeSources()` folds sources in trust order with
-  **curated-wins precedence** (first writer of an id/edge wins) and stamps each
-  node's true origin; output is `public/graph.all.json`. It only appears in the
-  dropdown once >1 source exists.
+  **curated-wins precedence**, matching identity by **normalized name** (reusing
+  the kushy adapter's `normalizeName`) — sources have disjoint id namespaces, so a
+  strain in two sources is the same identity under two ids. The higher-trust node
+  is kept verbatim (its `strainType`/effects/tier stay — curated Sour Diesel
+  stays a sativa) and the lower-trust source's **edges are re-pointed** onto it,
+  so community lineage attaches to the verified core instead of a shadow
+  duplicate. Edges go in through a reachability guard (folding can imply a cycle
+  present in neither source). Each surviving node keeps its true origin; output is
+  `public/graph.all.json`, shown in the dropdown only once >1 source exists.
 - **Provenance:** every node carries `source` + `confidence`. `DetailPanel` shows
   a badge for non-curated nodes; the 2D union view mutes non-curated nodes at
   rest (`GraphController` `dimLowConfidence`) so the verified core dominates. The

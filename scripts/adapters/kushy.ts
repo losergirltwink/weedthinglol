@@ -45,8 +45,9 @@ const normalizeType = (raw: string): StrainType => {
 };
 
 // kushy ids are bare integers and `crosses` references them by that integer;
-// prefix so they never collide with curated slug ids in the union (a strain in
-// both sources stays two distinct nodes — reconciling by name is out of scope).
+// prefix so they never collide with curated slug ids. Cross-source identity is
+// then reconciled by NAME at union time (mergeSources in build-graph.ts), which
+// reuses `normalizeName` below so a kushy "Sour Diesel" folds onto the curated one.
 const nodeId = (rawId: string) => `kushy-${rawId}`;
 
 const NULLISH = new Set(["", "NULL"]);
@@ -65,8 +66,11 @@ const stripHtml = (s: string): string =>
     .trim();
 
 // Fold the common naming inconsistencies so "Skunk No.1", "Skunk #1" and
-// "Skunk No. 1" all key to one canonical form for name->id resolution.
-const normalizeName = (name: string): string =>
+// "Skunk No. 1" all key to one canonical form for name->id resolution. Exported
+// because the union merge (build-graph.ts) reuses it to match the SAME strain
+// across sources — cross-source identity must use the same key as within-source
+// de-dup, so a kushy "Sour Diesel" folds onto the curated one.
+export const normalizeName = (name: string): string =>
   name
     .trim()
     .toLowerCase()

@@ -22,6 +22,7 @@ import type { Strain, Lineage, Confidence } from "../app/lib/strains";
 import { TYPE_COLORS } from "../app/lib/strains";
 import { SOURCES, ALL_SOURCE, type SourceDef } from "../data/sources";
 import { adapterFor } from "./adapters";
+import { normalizeName } from "./adapters/kushy";
 
 const ROOT = process.cwd();
 
@@ -212,9 +213,17 @@ function compile(
 
 /**
  * Merge all sources into one canonical dataset with curated-wins precedence.
- * SOURCES is ordered by trust, so the FIRST writer of an id/edge wins: a scrape
- * only fills gaps the curated tier leaves, never overwrites it. Each surviving
- * node records the source it actually came from.
+ * SOURCES is ordered by trust, so the FIRST writer of an identity wins. Identity
+ * is matched by NORMALIZED NAME, not id — sources use disjoint id namespaces
+ * (curated slugs vs `kushy-N`), so a strain in two sources arrives as two ids for
+ * the SAME thing. The higher-trust node is kept verbatim (its strainType,
+ * effects, tier — curated stays a sativa); the duplicate is dropped and the
+ * lower-trust source's EDGES are re-pointed onto the surviving node, so community
+ * lineage attaches to the verified core instead of a shadow duplicate.
+ *
+ * Folding two nodes can imply a cycle that existed in neither source, so edges go
+ * in through the same reachability guard the kushy adapter uses — compile() hard-
+ * fails on any cycle, so we skip the edge that would close a loop.
  */
 function mergeSources(sources: SourceDef[]): {
   strains: Strain[];
@@ -223,23 +232,71 @@ function mergeSources(sources: SourceDef[]): {
 } {
   const strainById = new Map<string, Strain>();
   const origin = new Map<string, Provenance>();
+  const canonByName = new Map<string, string>(); // normalized name -> surviving id
+  const idRemap = new Map<string, string>(); // dropped duplicate id -> surviving id
+  const remap = (id: string) => idRemap.get(id) ?? id;
+
+  // Stats for the build log.
+  let folded = 0;
+
+  // Reachability guard shared across all sources' edges (the union is one DAG).
+  const adj = new Map<string, Set<string>>();
+  const reaches = (from: string, to: string): boolean => {
+    const stack = [from];
+    const seen = new Set<string>();
+    while (stack.length) {
+      const n = stack.pop()!;
+      if (n === to) return true;
+      if (seen.has(n)) continue;
+      seen.add(n);
+      for (const nxt of adj.get(n) ?? []) stack.push(nxt);
+    }
+    return false;
+  };
   const edgeKeys = new Set<string>();
   const lineage: Lineage[] = [];
+  let cyclic = 0;
 
   for (const src of sources) {
     const data = adapterFor(src.id).load();
+
+    // Strains first: claim each identity by name, or fold onto the higher-trust
+    // node already holding it. Build the id remap before this source's edges.
     for (const s of data.strains) {
-      if (strainById.has(s.id)) continue; // higher-precedence source already won
+      const name = normalizeName(s.name);
+      const owner = canonByName.get(name);
+      if (owner) {
+        idRemap.set(s.id, owner); // same strain already claimed — fold, keep winner
+        folded++;
+        continue;
+      }
       strainById.set(s.id, s);
       origin.set(s.id, { source: src.id, confidence: src.confidence });
+      canonByName.set(name, s.id);
     }
+
+    // Edges: re-point both endpoints onto surviving ids, drop self-loops/dupes,
+    // and admit only those that keep the union acyclic.
     for (const e of data.lineage) {
-      const key = `${e.parent}->${e.child}`;
+      const parent = remap(e.parent);
+      const child = remap(e.child);
+      if (parent === child) continue; // collapsed onto the same node
+      const key = `${parent}->${child}`;
       if (edgeKeys.has(key)) continue;
       edgeKeys.add(key);
-      lineage.push(e);
+      if (reaches(child, parent)) {
+        cyclic++; // adding parent->child would close a cycle
+        continue;
+      }
+      (adj.get(parent) ?? adj.set(parent, new Set()).get(parent)!).add(child);
+      lineage.push({ parent, child });
     }
   }
+
+  console.log(
+    `  ↳ union merge: ${folded} cross-source duplicate(s) folded onto higher-trust nodes; ` +
+      `${lineage.length} edges (${cyclic} cyclic skipped) over ${strainById.size} nodes.`,
+  );
 
   return { strains: [...strainById.values()], lineage, origin };
 }
