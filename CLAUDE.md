@@ -50,6 +50,10 @@ npm.** Native build deps (sharp, unrs-resolver, esbuild) must stay `true` under
   `db/migrations/` (never hand-edit generated SQL). `pnpm db:migrate` — apply
   them to `DATABASE_URL` (default local PGlite; reads `.env.local`).
   `pnpm check:migrations` — fail if the schema changed without a migration (CI).
+- `pnpm promote <strainKey> [--dry-run]` — graduate a crowd or personal strain
+  into `data/curated/` (appends the record + edges to curated parents; existing
+  lines untouched; `lineageStatus: "reported"`, no citations). Then verify, add
+  citations, `pnpm build:graph`. Candidates are ranked on `/queue`.
 - `pnpm check:graph` — rebuild the graphs and **fail if `public/` or
   `generated/` changed** (the CI drift check). Run on a tree where `public/` is committed.
 - `pnpm typecheck` (`tsc --noEmit`) · `pnpm lint` (`eslint app scripts data`) ·
@@ -221,9 +225,27 @@ Principle: **separate at rest, unified at view-time.**
   out of effects) → `queries.ts` (takes `db`; **visibility via
   `includePrivate` = `viewer.isOwner`, never a client flag**) → `actions.ts`
   (`"use server"`; every export starts with `await requireOwner()`, enforced by
-  `actions.test.ts`). Notes render as plain text, never HTML. Pages:
+  `app/lib/actions.test.ts`, which scans every `actions.ts`). Notes render as
+  plain text, never HTML. Pages:
   `/strain/[key]` (public; noindex for non-curated), `/journal`,
   `/journal/new`, `/journal/[id]/edit`. The wishlist is shown publicly.
+- **Personal strains (5C):** `personal_strain` (keyed by `strainKey` from the
+  name; the key is immutable, so renames may only change spelling or
+  capitalization). It's a fourth confidence tier, `personal`. Parents may be
+  catalog or personal keys, and edits are cycle-checked. **Always resolve keys
+  through `app/lib/strain-resolver.ts`** (`resolveStrain`, `strainExists`,
+  `strainNames`, `strainOptions`). The catalog wins on collision; a promoted
+  personal row becomes a stale shadow that `/queue` offers to delete. Deleting a
+  live personal strain is refused while sessions, the wishlist or child strains
+  reference it. Personal-strain notes are **owner-only** (they may reveal
+  location). Pages: `/strains/new`, `/strains/[key]/edit`; `/strain/[key]`
+  renders both kinds.
+- **Promotion (5A.4):** `scripts/lib/promote.ts` `planPromotion` (pure) +
+  `scripts/promote.ts` (I/O). `scripts/lib/curated-format.ts` `appendRows`
+  preserves the curated files' hand formatting (tested byte-for-byte against the
+  real files). `/queue` (owner) ranks candidates with `app/lib/promotion.ts`:
+  tried ×10, wishlist +5, personal +3, curated relatives +2 each. Impersonal
+  cross nodes are skipped.
 - **Pseudonymity:** the `user` row holds GitHub name/email/avatar. Never render
   them on a public page. The public identity is `SITE_NAME` (`app/lib/site.ts`).
 - **Dynamic vs static:** `getViewer()` reads `headers()` first, so any page using
@@ -270,7 +292,8 @@ done: Drizzle/Postgres (PGlite locally), Better Auth single-owner gate,
 Milestone 4 done: journal sessions (create/edit/delete, ratings, effects,
 context, flavors/terpenes, public/private), want-to-try list, public
 `/strain/[key]` pages, server strain catalog, and a strain-page link from
-`DetailPanel`.
+`DetailPanel`. Milestone 5 done: personal strains + the promotion workflow
+(`pnpm promote`, `/queue`).
 
 Phase 4 follow-ups: the **`crowd` tier is live** — `kushy` (a ~9.5k-strain
 community CSV scrape) compiles to a 1.2k-node connected lineage graph via

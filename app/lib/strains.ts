@@ -7,9 +7,11 @@ export type StrainType = "indica" | "sativa" | "hybrid" | "landrace";
 /**
  * Confidence tier of a data source (Phase 4). A gradient from hand-verified
  * (`curated`) to scraped-but-structured (`documented`) to sparse/contested
- * (`crowd`). Drives union-merge precedence and provenance display.
+ * (`crowd`). Drives union-merge precedence and provenance display. `personal`
+ * (Phase 5) marks strains the owner added from the journal (DB-backed, not part
+ * of any baked source; lineage is the owner's own claim).
  */
-export type Confidence = "curated" | "documented" | "crowd";
+export type Confidence = "curated" | "documented" | "crowd" | "personal";
 
 /**
  * Effects that are side-effects to AVOID, not desirable traits. Crowd sources
@@ -111,10 +113,11 @@ export const CONFIDENCE_META: Record<Confidence, { label: string; color: string;
   curated: { label: "Curated", color: "#22c55e", blurb: "Hand-verified" }, // green
   documented: { label: "Documented", color: "#f59e0b", blurb: "Structured scrape" }, // amber
   crowd: { label: "Unverified", color: "#ef4444", blurb: "Community-sourced, not verified" }, // red
+  personal: { label: "Personal", color: "#38bdf8", blurb: "Added from the journal, not verified" }, // sky
 };
 
 /** Display order for the legend / filters. */
-export const STRAIN_TYPES: StrainType[] = ["landrace", "sativa", "hybrid", "indica"];
+export const STRAIN_TYPES = ["landrace", "sativa", "hybrid", "indica"] as const satisfies readonly StrainType[];
 
 /**
  * One strain in the server-side catalog (generated/strain-catalog.json), keyed

@@ -15,6 +15,13 @@
       "when": 1792805693669,
       "tag": "0001_journal",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792808579030,
+      "tag": "0002_personal_strains",
+      "breakpoints": true
     }
   ]
 }

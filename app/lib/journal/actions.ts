@@ -1,15 +1,15 @@
 "use server";
 
 // Journal mutations. Server actions are public HTTP endpoints, so EVERY export
-// here starts with `await requireOwner()` (enforced by actions.test.ts), then
-// validates its input — arguments are untrusted even from our own forms.
+// here starts with `await requireOwner()` (enforced by app/lib/actions.test.ts),
+// then validates its input — arguments are untrusted even from our own forms.
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { getDb } from "@/db";
-import { hasStrain } from "../catalog";
 import { requireOwner } from "../owner";
+import { strainExists } from "../strain-resolver";
 import { parseEntry, wishlistNote, type FieldErrors } from "./input";
 import {
   addToWishlist,
@@ -33,8 +33,9 @@ export async function createEntryAction(raw: unknown): Promise<ActionResult<{ id
   await requireOwner();
   const parsed = parseEntry(raw);
   if (!parsed.ok) return parsed;
-  if (!hasStrain(parsed.data.strainKey)) return { ok: false, errors: { strainKey: "Unknown strain" } };
-  const row = await createEntry(await getDb(), parsed.data);
+  const db = await getDb();
+  if (!(await strainExists(db, parsed.data.strainKey))) return { ok: false, errors: { strainKey: "Unknown strain" } };
+  const row = await createEntry(db, parsed.data);
   revalidateStrain(row.strainKey);
   return { ok: true, data: { id: row.id } };
 }
@@ -45,8 +46,9 @@ export async function updateEntryAction(id: unknown, raw: unknown): Promise<Acti
   if (!idParsed.success) return { ok: false, errors: { form: "Invalid entry id" } };
   const parsed = parseEntry(raw);
   if (!parsed.ok) return parsed;
-  if (!hasStrain(parsed.data.strainKey)) return { ok: false, errors: { strainKey: "Unknown strain" } };
-  const row = await updateEntry(await getDb(), idParsed.data, parsed.data);
+  const db = await getDb();
+  if (!(await strainExists(db, parsed.data.strainKey))) return { ok: false, errors: { strainKey: "Unknown strain" } };
+  const row = await updateEntry(db, idParsed.data, parsed.data);
   if (!row) return { ok: false, errors: { form: "Entry not found" } };
   revalidateStrain(row.strainKey);
   return { ok: true, data: { id: row.id } };
@@ -71,10 +73,11 @@ export async function setWishlistedAction(
   const key = strainKeyArg.safeParse(strainKey);
   const want = z.boolean().safeParse(wishlisted);
   const noteParsed = wishlistNote.safeParse(note);
-  if (!key.success || !want.success || !noteParsed.success || !hasStrain(key.data)) {
+  if (!key.success || !want.success || !noteParsed.success) {
     return { ok: false, errors: { form: "Invalid request" } };
   }
   const db = await getDb();
+  if (!(await strainExists(db, key.data))) return { ok: false, errors: { form: "Unknown strain" } };
   if (want.data) await addToWishlist(db, key.data, { source: "manual", note: noteParsed.data });
   else await removeFromWishlist(db, key.data);
   revalidateStrain(key.data);

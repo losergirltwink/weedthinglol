@@ -39,16 +39,25 @@ export function StrainPicker({ options }: { options: Option[] }) {
                 className="flex items-center justify-between px-4 py-2 text-sm hover:bg-zinc-800"
               >
                 <span>{o.name}</span>
-                {o.confidence !== "curated" && <span className="text-xs text-zinc-500">unverified</span>}
+                {o.confidence === "personal" ? (
+                  <span className="text-xs text-sky-400/80">personal</span>
+                ) : (
+                  o.confidence !== "curated" && <span className="text-xs text-zinc-500">unverified</span>
+                )}
               </Link>
             </li>
           ))}
         </ul>
       )}
-      {q && matches.length === 0 && (
+      {q.trim() && (
         <p className="text-sm text-zinc-500">
-          No match. Strains not in the graph can be added later (personal strains are a planned
-          feature).
+          {matches.length === 0 ? "No match. " : "Not listed? "}
+          <Link
+            href={`/strains/new?name=${encodeURIComponent(q.trim())}`}
+            className="text-zinc-300 underline decoration-zinc-600 hover:text-white"
+          >
+            Add “{q.trim()}” as a personal strain
+          </Link>
         </p>
       )}
     </div>

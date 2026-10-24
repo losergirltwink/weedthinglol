@@ -4,9 +4,9 @@ import Link from "next/link";
 import { PageShell } from "@/app/components/PageShell";
 import { SignOutButton } from "@/app/components/auth/SignOutButton";
 import { EntryCard } from "@/app/components/journal/EntryCard";
-import { strainName } from "@/app/lib/catalog";
 import { listEntries, listWishlist } from "@/app/lib/journal/queries";
 import { getViewer } from "@/app/lib/owner";
+import { strainNames } from "@/app/lib/strain-resolver";
 import { getDb } from "@/db";
 
 export const metadata: Metadata = {
@@ -23,6 +23,8 @@ export default async function JournalPage() {
     listEntries(db, { includePrivate: isOwner }),
     listWishlist(db),
   ]);
+  const names = await strainNames(db, [...entries.map((e) => e.strainKey), ...wishlist.map((w) => w.strainKey)]);
+  const strainName = (k: string) => names.get(k) ?? k;
 
   return (
     <PageShell
@@ -30,6 +32,9 @@ export default async function JournalPage() {
       actions={
         isOwner ? (
           <>
+            <Link href="/queue" className="text-zinc-400 hover:text-zinc-100">
+              Queue
+            </Link>
             <Link href="/account" className="text-zinc-400 hover:text-zinc-100">
               Account
             </Link>

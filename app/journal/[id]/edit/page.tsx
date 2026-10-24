@@ -4,9 +4,10 @@ import { z } from "zod";
 
 import { PageShell } from "@/app/components/PageShell";
 import { EntryForm, type EntryFormValues } from "@/app/components/journal/EntryForm";
-import { catalogVocabulary, strainName } from "@/app/lib/catalog";
+import { catalogVocabulary } from "@/app/lib/catalog";
 import { getEntry } from "@/app/lib/journal/queries";
 import { requireOwnerPage } from "@/app/lib/owner";
+import { strainNames } from "@/app/lib/strain-resolver";
 import { getDb } from "@/db";
 
 export const metadata: Metadata = { title: "Edit session", robots: { index: false } };
@@ -15,7 +16,8 @@ export default async function EditEntryPage({ params }: { params: Promise<{ id: 
   await requireOwnerPage();
   const id = z.uuid().safeParse((await params).id);
   if (!id.success) notFound();
-  const entry = await getEntry(await getDb(), id.data, { includePrivate: true });
+  const db = await getDb();
+  const entry = await getEntry(db, id.data, { includePrivate: true });
   if (!entry) notFound();
 
   const initial: EntryFormValues = {
@@ -34,7 +36,7 @@ export default async function EditEntryPage({ params }: { params: Promise<{ id: 
     wouldBuyAgain: entry.wouldBuyAgain == null ? "" : entry.wouldBuyAgain ? "yes" : "no",
     isPublic: entry.isPublic,
   };
-  const name = strainName(entry.strainKey);
+  const name = (await strainNames(db, [entry.strainKey])).get(entry.strainKey) ?? entry.strainKey;
 
   return (
     <PageShell title={`Edit session · ${name}`}>

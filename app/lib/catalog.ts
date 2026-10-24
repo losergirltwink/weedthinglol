@@ -14,6 +14,11 @@ export function getCatalogEntry(key: string): CatalogEntry | undefined {
   return Object.hasOwn(catalog, key) ? catalog[key] : undefined;
 }
 
+/** Every catalog entry (read-only; do not mutate). */
+export function catalogEntries(): CatalogEntry[] {
+  return Object.values(catalog);
+}
+
 export function hasStrain(key: string): boolean {
   return Object.hasOwn(catalog, key);
 }

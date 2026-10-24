@@ -117,6 +117,15 @@ export async function removeFromWishlist(db: Db, strainKey: string): Promise<voi
   await db.delete(wishlistItem).where(eq(wishlistItem.strainKey, strainKey));
 }
 
+/** Session count per strain (all entries — owner-side views only). */
+export async function sessionCounts(db: Db): Promise<Map<string, number>> {
+  const rows = await db
+    .select({ k: journalEntry.strainKey, n: count() })
+    .from(journalEntry)
+    .groupBy(journalEntry.strainKey);
+  return new Map(rows.map((r) => [r.k, r.n]));
+}
+
 /** Which of `keys` have at least one visible entry (for "tried" markers). */
 export async function triedKeys(db: Db, keys: string[], { includePrivate }: { includePrivate: boolean }) {
   if (!keys.length) return new Set<string>();

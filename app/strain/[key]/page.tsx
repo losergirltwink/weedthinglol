@@ -7,9 +7,9 @@ import { Chips } from "@/app/components/journal/Chips";
 import { EntryCard } from "@/app/components/journal/EntryCard";
 import { Stars } from "@/app/components/journal/Stars";
 import { WishlistButton } from "@/app/components/journal/WishlistButton";
-import { getCatalogEntry, strainName } from "@/app/lib/catalog";
 import { isWishlisted, listEntries, strainSummary } from "@/app/lib/journal/queries";
 import { getViewer } from "@/app/lib/owner";
+import { resolveStrain, strainNames } from "@/app/lib/strain-resolver";
 import { CONFIDENCE_META, TYPE_COLORS } from "@/app/lib/strains";
 import { sourceById } from "@/data/sources";
 import { getDb } from "@/db";
@@ -17,30 +17,32 @@ import { getDb } from "@/db";
 type Params = { params: Promise<{ key: string }> };
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
-  const strain = getCatalogEntry((await params).key);
+  const strain = await resolveStrain(await getDb(), (await params).key);
   if (!strain) return {};
   return {
     title: strain.name,
     description: `${strain.name}: lineage, effects, and personal notes.`,
-    // Only verified strains are worth indexing; crowd entries stay findable
-    // on-site but out of search results.
-    robots: strain.confidence === "curated" ? undefined : { index: false },
+    // Index verified + personal strains; crowd entries stay findable on-site but
+    // out of search results.
+    robots: strain.confidence === "crowd" ? { index: false } : undefined,
   };
 }
 
 export default async function StrainPage({ params }: Params) {
   const { key } = await params;
-  const strain = getCatalogEntry(key);
+  const db = await getDb();
+  const strain = await resolveStrain(db, key);
   if (!strain) notFound();
 
   const { isOwner } = await getViewer();
-  const db = await getDb();
   const visibility = { includePrivate: isOwner };
-  const [summary, entries, wishlisted] = await Promise.all([
+  const [summary, entries, wishlisted, names] = await Promise.all([
     strainSummary(db, key, visibility),
     listEntries(db, { ...visibility, strainKey: key }),
     isOwner ? isWishlisted(db, key) : Promise.resolve(false),
+    strainNames(db, [...strain.parents, ...strain.children]),
   ]);
+  const isPersonal = strain.confidence === "personal";
 
   const meta = CONFIDENCE_META[strain.confidence];
   const source = sourceById(strain.source);
@@ -66,21 +68,37 @@ export default async function StrainPage({ params }: Params) {
       {strain.confidence !== "curated" && source && (
         <p className="mt-2 text-xs leading-relaxed text-zinc-500">{source.attribution}</p>
       )}
+      {isPersonal && (
+        <p className="mt-2 text-xs leading-relaxed text-zinc-500">
+          Added from the journal: not in the graph data, parentage unverified.
+          {isOwner && (
+            <Link href={`/strains/${key}/edit`} className="ml-2 text-zinc-400 hover:text-zinc-200">
+              Edit
+            </Link>
+          )}
+        </p>
+      )}
 
       <section className="mt-6 space-y-2">
         <Chips items={strain.effects} />
         {strain.negatives.length > 0 && <Chips items={strain.negatives} tone="warn" />}
         {strain.note && <p className="text-sm italic text-zinc-500">{strain.note}</p>}
+        {/* Personal-strain notes (where found, budtender, …) can reveal location:
+            owner-only, unlike journal sessions which have their own public flag. */}
+        {isOwner && strain.personalNotes && (
+          <p className="whitespace-pre-wrap text-sm text-zinc-400">{strain.personalNotes}</p>
+        )}
       </section>
 
       <section className="mt-6 grid gap-4 sm:grid-cols-2">
         <Lineage
           title="Parents"
           keys={strain.parents}
-          empty="Landrace / root"
+          names={names}
+          empty={isPersonal ? "Unknown" : "Landrace / root"}
           badge={strain.lineageStatus}
         />
-        <Lineage title="Children" keys={strain.children} empty="None recorded" />
+        <Lineage title="Children" keys={strain.children} names={names} empty="None recorded" />
       </section>
 
       {strain.citations?.length ? (
@@ -139,11 +157,13 @@ const STATUS_LABEL = { confirmed: "confirmed", reported: "reported", disputed: "
 function Lineage({
   title,
   keys,
+  names,
   empty,
   badge,
 }: {
   title: string;
   keys: string[];
+  names: Map<string, string>;
   empty: string;
   badge?: keyof typeof STATUS_LABEL;
 }) {
@@ -157,7 +177,7 @@ function Lineage({
         <div className="flex flex-wrap gap-1.5">
           {keys.map((k) => (
             <Link key={k} href={`/strain/${k}`} className="rounded-md bg-zinc-800 px-2 py-0.5 text-xs text-zinc-200 hover:bg-zinc-700">
-              {strainName(k)}
+              {names.get(k) ?? k}
             </Link>
           ))}
         </div>

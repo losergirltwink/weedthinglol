@@ -9,6 +9,7 @@
 import { sql } from "drizzle-orm";
 
 import { METHODS, TIMES_OF_DAY, WISHLIST_SOURCES } from "@/app/lib/journal/constants";
+import { STRAIN_TYPES } from "@/app/lib/strains";
 import {
   bigint,
   boolean,
@@ -177,4 +178,23 @@ export const wishlistItem = pgTable("wishlist_item", {
   source: wishlistSource("source").notNull().default("manual"),
   note: text("note"),
   addedAt: timestamp("added_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ---------------------------------------------------------------------------
+// Personal strains (Phase 5C). Strains the owner logged that aren't in any baked
+// source. Keyed by strainKey (derived from the name, immutable once created —
+// journal entries reference it). `parent_keys` may name catalog OR personal
+// strains. Graduates to curated via `pnpm promote` (docs/phase-5-plan.md 5A.4).
+// ---------------------------------------------------------------------------
+
+export const strainTypeEnum = pgEnum("strain_type", STRAIN_TYPES);
+
+export const personalStrain = pgTable("personal_strain", {
+  strainKey: text("strain_key").primaryKey(),
+  name: text("name").notNull(),
+  strainType: strainTypeEnum("strain_type").notNull(),
+  parentKeys: text("parent_keys").array().notNull().default(sql`'{}'::text[]`),
+  notes: text("notes"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });

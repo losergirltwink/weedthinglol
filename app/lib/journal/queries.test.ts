@@ -12,6 +12,7 @@ import {
   listEntries,
   listWishlist,
   removeFromWishlist,
+  sessionCounts,
   strainSummary,
   triedKeys,
   updateEntry,
@@ -138,4 +139,11 @@ it("triedKeys reports strains with visible sessions", async () => {
   expect(await triedKeys(h.db, ["a", "b", "c"], { includePrivate: false })).toEqual(new Set(["a"]));
   expect(await triedKeys(h.db, ["a", "b", "c"], { includePrivate: true })).toEqual(new Set(["a", "b"]));
   expect(await triedKeys(h.db, [], { includePrivate: true })).toEqual(new Set());
+});
+
+it("sessionCounts counts every entry per strain, private included", async () => {
+  await createEntry(h.db, entry({ strainKey: "a" }));
+  await createEntry(h.db, entry({ strainKey: "a", isPublic: false }));
+  await createEntry(h.db, entry({ strainKey: "b" }));
+  expect(await sessionCounts(h.db)).toEqual(new Map([["a", 2], ["b", 1]]));
 });

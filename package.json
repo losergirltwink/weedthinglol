@@ -6,6 +6,7 @@
     "dev": "next dev",
     "stop": "pkill -f '[n]ext dev|[n]ext-server' && echo 'dev server stopped' || echo 'no dev server running'",
     "build:graph": "tsx scripts/build-graph.ts",
+    "promote": "node --env-file-if-exists=.env.local --import tsx scripts/promote.ts",
     "check:graph": "pnpm build:graph && git diff --exit-code --stat -- public/ generated/ && test -z \"$(git status --porcelain -- public/ generated/)\"",
     "build": "next build",
     "start": "next start",
