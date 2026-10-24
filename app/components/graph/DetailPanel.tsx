@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import {
   CONFIDENCE_META,
   TYPE_COLORS,
@@ -9,6 +11,7 @@ import {
   type StrainType,
 } from "@/app/lib/strains";
 import { sourceById } from "@/data/sources";
+import { Stars } from "@/app/components/journal/Stars";
 import type { StrainGraphType } from "@/app/lib/graph-utils";
 
 interface Props {
@@ -16,9 +19,12 @@ interface Props {
   id: string;
   onSelect: (id: string) => void;
   onClose: () => void;
+  /** My rating summary for this strain, if I've logged it. */
+  myRating?: { avgHalves: number; sessions: number };
+  wishlisted?: boolean;
 }
 
-export function DetailPanel({ graph, id, onSelect, onClose }: Props) {
+export function DetailPanel({ graph, id, onSelect, onClose, myRating, wishlisted = false }: Props) {
   const attrs = graph.getNodeAttributes(id);
   const parents = graph
     .inNeighbors(id)
@@ -43,7 +49,12 @@ export function DetailPanel({ graph, id, onSelect, onClose }: Props) {
   return (
     <div className="rounded-lg bg-zinc-900/90 p-4 text-sm shadow-lg backdrop-blur">
       <div className="flex items-start justify-between gap-2">
-        <h2 className="text-lg font-semibold text-zinc-50">{attrs.label}</h2>
+        <div>
+          <h2 className="text-lg font-semibold text-zinc-50">{attrs.label}</h2>
+          <Link href={`/strain/${attrs.strainKey}`} className="text-xs text-zinc-500 hover:text-zinc-200">
+            Strain page & journal →
+          </Link>
+        </div>
         <button
           onClick={onClose}
           aria-label="Close"
@@ -91,6 +102,22 @@ export function DetailPanel({ graph, id, onSelect, onClose }: Props) {
             <p className="mt-1.5 text-xs leading-relaxed text-zinc-500">{sourceDef.attribution}</p>
           )}
         </div>
+      )}
+
+      {(myRating || wishlisted) && (
+        <p className="mt-2 flex items-center gap-2 text-xs text-zinc-400">
+          {myRating ? (
+            <>
+              <Stars halves={Math.round(myRating.avgHalves)} />
+              <span>
+                my avg {(myRating.avgHalves / 2).toFixed(1)} · {myRating.sessions} session
+                {myRating.sessions === 1 ? "" : "s"}
+              </span>
+            </>
+          ) : (
+            <span className="text-emerald-400/90">On my want-to-try list</span>
+          )}
+        </p>
       )}
 
       {attrs.effects.length > 0 && (

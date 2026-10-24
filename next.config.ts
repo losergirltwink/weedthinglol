@@ -1,8 +1,9 @@
 import type { NextConfig } from "next";
 
-// Baseline security headers for every route. A full Content-Security-Policy
-// (script-src with nonces) is deferred to launch hardening (docs/phase-5-plan.md
-// 5E); the directives below are the ones that need no nonce plumbing.
+// Baseline security headers for every route. Pages additionally get the full
+// per-request nonce CSP from proxy.ts (app/lib/csp.ts); this baseline CSP covers
+// everything the proxy skips (API, assets) and is compatible with it (browsers
+// enforce both).
 const securityHeaders = [
   {
     key: "Content-Security-Policy",

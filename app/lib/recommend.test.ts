@@ -1,42 +1,8 @@
-import { DirectedGraph } from "graphology";
 import { describe, expect, it } from "vitest";
 
-import type { StrainGraphType } from "./graph-utils";
-import { allEffects, negativeEffects, recommend } from "./recommend";
-import type { StrainNodeAttributes, StrainType } from "./strains";
-
-interface NodeSpec {
-  type?: StrainType;
-  effects?: string[];
-  negatives?: string[];
-  gen?: number;
-  cross?: boolean;
-}
-
-/** Tiny hand-built graph with just the attributes the recommender reads. */
-function graphOf(nodes: Record<string, NodeSpec>, edges: [string, string][] = []): StrainGraphType {
-  const g: StrainGraphType = new DirectedGraph<StrainNodeAttributes>();
-  for (const [id, n] of Object.entries(nodes)) {
-    g.addNode(id, {
-      label: id.toUpperCase(),
-      strainKey: id,
-      strainType: n.type ?? "hybrid",
-      effects: n.effects ?? [],
-      negatives: n.negatives ?? [],
-      nameKind: n.cross ? "cross" : "named",
-      generation: n.gen ?? 0,
-      descendants: 0,
-      x: 0,
-      y: 0,
-      size: 1,
-      color: "#000",
-      source: "curated",
-      confidence: "curated",
-    });
-  }
-  for (const [p, c] of edges) g.addDirectedEdge(p, c);
-  return g;
-}
+import { graphOf } from "@/test/graph";
+import type { Overlay } from "./overlay-types";
+import { allEffects, negativeEffects, recommend, recommendForProfile } from "./recommend";
 
 const ids = (recs: { id: string }[]) => recs.map((r) => r.id);
 
@@ -163,5 +129,91 @@ describe("effect vocabularies", () => {
 
   it("lists distinct side-effects, sorted", () => {
     expect(negativeEffects(g)).toEqual(["anxious", "dry mouth"]);
+  });
+});
+
+describe("recommendForProfile", () => {
+  //  haze ──▶ amnesia (tried, loved)
+  //    └────▶ ssh (untried)          kush ──▶ og (tried, disliked)
+  //  lemon (untried, unrelated, effects I like)   sleepy-k (untried, kush child)
+  const g = graphOf(
+    {
+      haze: { type: "sativa", effects: ["uplifted"] },
+      amnesia: { type: "sativa", effects: ["creative"] },
+      ssh: { type: "sativa", effects: ["energetic"] },
+      kush: { type: "indica", effects: ["sleepy"] },
+      og: { type: "indica", effects: ["sleepy"] },
+      "sleepy-k": { type: "indica", effects: ["sleepy"], negatives: ["dry mouth"] },
+      lemon: { type: "hybrid", effects: ["creative", "energetic"] },
+      "lemon-x": { type: "hybrid", effects: ["creative", "energetic"], cross: true },
+      nothing: { type: "hybrid", effects: ["hungry"] },
+    },
+    [
+      ["haze", "amnesia"],
+      ["haze", "ssh"],
+      ["kush", "og"],
+      ["kush", "sleepy-k"],
+    ],
+  );
+  const profile: Overlay["profile"] = {
+    coldStart: false,
+    meanRating: 3,
+    effects: [
+      { tag: "creative", score: 2, sessions: 2 },
+      { tag: "energetic", score: 1, sessions: 1 },
+      { tag: "sleepy", score: -2, sessions: 2 },
+    ],
+    lineage: [
+      { key: "haze", name: "Haze", score: 1.5, via: ["Amnesia", "SSH-like"] },
+      { key: "kush", name: "Kush", score: -1, via: ["OG", "X"] },
+    ],
+    types: [
+      { group: "sativa", avg: 4.5, sessions: 2 },
+      { group: "indica", avg: 1.5, sessions: 2 },
+    ],
+    sideEffects: [{ tag: "dry mouth", sessions: 2, share: 0.5 }],
+  };
+  const recs = recommendForProfile(g, profile, { tried: new Set(["amnesia", "og"]), limit: 10 });
+  const byId = Object.fromEntries(recs.map((r) => [r.id, r]));
+
+  it("never recommends tried strains or strains with no effect/lineage signal", () => {
+    expect(byId.amnesia).toBeUndefined();
+    expect(byId.og).toBeUndefined();
+    expect(byId.nothing).toBeUndefined();
+    expect(byId["sleepy-k"]).toBeUndefined(); // only disliked effects + disliked lineage
+  });
+
+  it("scores effects against my positive affinity", () => {
+    expect(byId.lemon.effectScore).toBe(1); // creative 2 + energetic 1 = all of my positive 3
+    expect(byId.lemon.likedEffects).toEqual(["creative", "energetic"]);
+  });
+
+  it("credits lineage through liked ancestors, incl. the ancestor itself", () => {
+    expect(byId.ssh.lineageScore).toBeCloseTo(0.5); // child of haze: 1 × 0.5
+    expect(byId.ssh.reasons).toContain("descends from Haze");
+    expect(byId.haze.lineageScore).toBe(1);
+    expect(byId.haze.reasons.some((r) => r.startsWith("ancestor of strains you rate highly"))).toBe(true);
+  });
+
+  it("nudges by strain type and explains it", () => {
+    expect(byId.ssh.reasons).toContain("you tend to like sativas");
+  });
+
+  it("down-weights cross-expression nodes", () => {
+    expect(byId["lemon-x"].score).toBeCloseTo(byId.lemon.score * 0.6);
+  });
+
+  it("penalizes side effects I report often", () => {
+    const g2 = graphOf({ a: { effects: ["creative"] }, b: { effects: ["creative"], negatives: ["dry mouth"] } });
+    const [a, b] = recommendForProfile(g2, profile, { tried: new Set() });
+    expect([a.id, b.id]).toEqual(["a", "b"]);
+    expect(b.flaggedNegatives).toEqual(["dry mouth"]);
+    expect(b.score).toBeCloseTo(a.score * 0.45);
+  });
+
+  it("ignores rarely-reported side effects", () => {
+    const rare = { ...profile, sideEffects: [{ tag: "dry mouth", sessions: 1, share: 0.5 }] };
+    const g2 = graphOf({ b: { effects: ["creative"], negatives: ["dry mouth"] } });
+    expect(recommendForProfile(g2, rare, { tried: new Set() })[0].flaggedNegatives).toEqual([]);
   });
 });

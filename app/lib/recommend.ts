@@ -1,13 +1,16 @@
 // Strain recommendation scoring.
 //
-// Two entry points share one core (`recommend`):
+// Entry points:
 //   • seed a strain you like  -> blend effect similarity + lineage proximity
 //   • pick effects you want    -> rank purely by effect similarity
+//   • "for me"                 -> score against my learned taste profile
+//                                 (recommendForProfile, Phase 5D)
 //
-// Everything runs in-browser against the static graph; no persistence,
-// no network. The "profile" is just the arguments passed in.
+// Everything runs in-browser against the graph. For the first two the
+// "profile" is just the arguments; "for me" takes the overlay's profile.
 
 import type { StrainGraphType } from "./graph-utils";
+import type { Overlay } from "./overlay-types";
 
 export interface Recommendation {
   id: string;
@@ -162,6 +165,129 @@ export function negativeEffects(graph: StrainGraphType): string[] {
   const set = new Set<string>();
   graph.forEachNode((_, attrs) => (attrs.negatives ?? []).forEach((e) => set.add(e)));
   return [...set].sort();
+}
+
+// --- "for me" (taste profile) ------------------------------------------------
+
+export interface ProfileRecommendation {
+  id: string;
+  label: string;
+  score: number;
+  effectScore: number;
+  lineageScore: number;
+  /** Candidate effects I rate positively, strongest first. */
+  likedEffects: string[];
+  /** Candidate side-effects that I report often (penalized). */
+  flaggedNegatives: string[];
+  /** Plain-language reasons, most important first. */
+  reasons: string[];
+}
+
+const PROFILE_EFFECT_WEIGHT = 0.55;
+const PROFILE_LINEAGE_WEIGHT = 0.35;
+const PROFILE_TYPE_WEIGHT = 0.1;
+/** A side effect counts as "mine" once it shows up this often (and twice+). */
+export const SENSITIVE_SHARE = 0.25;
+const LINEAGE_HOP_DECAY = 0.5;
+const LINEAGE_MAX_HOPS = 6;
+
+/**
+ * Rank untried strains against my taste profile:
+ *   effect  — Σ my affinity for the candidate's effects / Σ my positive affinity
+ *   lineage — strongest affinity among the candidate's ancestors (or itself),
+ *             decayed 0.5 per hop, relative to my strongest lineage affinity
+ *   type    — how my average for its strain type compares to my overall mean
+ * then the shared side-effect + cross-expression penalties. A candidate needs a
+ * real effect or lineage signal; type alone never recommends anything.
+ */
+export function recommendForProfile(
+  graph: StrainGraphType,
+  profile: Overlay["profile"],
+  { tried, limit = 8 }: { tried: Set<string>; limit?: number },
+): ProfileRecommendation[] {
+  const affinity = new Map(profile.effects.map((a) => [a.tag, a.score]));
+  const positiveTotal = profile.effects.reduce((s, a) => s + Math.max(0, a.score), 0);
+  const lineage = new Map(profile.lineage.filter((l) => l.score > 0).map((l) => [l.key, l]));
+  const lineageMax = Math.max(0, ...[...lineage.values()].map((l) => l.score));
+  const typeAvg = new Map(profile.types.map((t) => [t.group, t.avg]));
+  const mean = profile.meanRating ?? 0;
+  const sensitive = new Set(
+    profile.sideEffects.filter((s) => s.sessions >= 2 && s.share >= SENSITIVE_SHARE).map((s) => s.tag),
+  );
+
+  const recs: ProfileRecommendation[] = [];
+  graph.forEachNode((id, a) => {
+    if (tried.has(a.strainKey) || a.confidence === "personal") return;
+
+    const liked = a.effects
+      .filter((e) => (affinity.get(e) ?? 0) > 0)
+      .sort((x, y) => affinity.get(y)! - affinity.get(x)!);
+    const raw = a.effects.reduce((s, e) => s + (affinity.get(e) ?? 0), 0);
+    const effectScore = positiveTotal > 0 ? Math.min(1, Math.max(0, raw / positiveTotal)) : 0;
+
+    let lineageScore = 0;
+    let via: string | null = null;
+    if (lineageMax > 0) {
+      for (const [nodeId, hops] of selfAndAncestors(graph, id)) {
+        const l = lineage.get(graph.getNodeAttribute(nodeId, "strainKey"));
+        if (!l) continue;
+        const v = (l.score / lineageMax) * LINEAGE_HOP_DECAY ** hops;
+        if (v > lineageScore) {
+          lineageScore = v;
+          via = hops === 0 ? `ancestor of strains you rate highly (${l.via.slice(0, 2).join(", ")})` : `descends from ${l.name}`;
+        }
+      }
+    }
+    if (effectScore === 0 && lineageScore === 0) return;
+
+    const ta = typeAvg.get(a.strainType);
+    const typeScore = ta == null ? 0.5 : Math.min(1, Math.max(0, 0.5 + (ta - mean) / 4));
+
+    let score =
+      PROFILE_EFFECT_WEIGHT * effectScore + PROFILE_LINEAGE_WEIGHT * lineageScore + PROFILE_TYPE_WEIGHT * typeScore;
+    const flagged = (a.negatives ?? []).filter((n) => sensitive.has(n));
+    if (flagged.length) score *= AVOID_PENALTY ** flagged.length;
+    if (a.nameKind === "cross") score *= CROSS_TARGET_PENALTY;
+
+    const reasons: string[] = [];
+    if (liked.length) reasons.push(`${liked.slice(0, 3).join(", ")}: effects you rate highly`);
+    if (via) reasons.push(via);
+    if (ta != null && ta - mean >= 0.5) reasons.push(`you tend to like ${a.strainType}s`);
+    if (flagged.length) reasons.push(`may cause ${flagged.join(", ")}, which you report`);
+
+    recs.push({
+      id,
+      label: a.label,
+      score,
+      effectScore,
+      lineageScore,
+      likedEffects: liked,
+      flaggedNegatives: flagged,
+      reasons,
+    });
+  });
+
+  recs.sort((x, y) => y.score - x.score || x.label.localeCompare(y.label));
+  return recs.slice(0, limit);
+}
+
+/** The node itself (0 hops) plus ancestors at their shortest hop distance. */
+function selfAndAncestors(graph: StrainGraphType, id: string): Map<string, number> {
+  const hops = new Map<string, number>([[id, 0]]);
+  let frontier = [id];
+  for (let depth = 1; depth <= LINEAGE_MAX_HOPS && frontier.length; depth++) {
+    const next: string[] = [];
+    for (const n of frontier) {
+      graph.forEachInNeighbor(n, (p) => {
+        if (!hops.has(p)) {
+          hops.set(p, depth);
+          next.push(p);
+        }
+      });
+    }
+    frontier = next;
+  }
+  return hops;
 }
 
 // --- internals --------------------------------------------------------------

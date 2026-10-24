@@ -206,11 +206,17 @@ gets them for free per the 3D policy.
    Uses **Better Auth** instead of Auth.js (next-auth v5 never shipped stable, and
    Auth.js now points new projects to Better Auth). Code is done. The dashboard
    setup in `docs/deploy.md` is still to do.
-4. 5C sessions + wishlist + `/strain/[key]` + log-a-session UI
-5. 5C personal strains + 5A.4 promote script/queue
-6. 5D profile + `/profile`
-7. 5D profile recs + graph overlay (2D. 3D sync only as a deliberate checkpoint)
-8. 5E launch hardening → first `main` release
+4. ✅ 5C sessions + wishlist + `/strain/[key]` + log-a-session UI (logging
+   lives on the strain page, which `DetailPanel` links to; per-strain
+   aggregates in the graph panel come with the 5D overlay)
+5. ✅ 5C personal strains + 5A.4 promote script/queue (promotion appends to
+   curated files without reformatting; `/queue` shows the command to run, since
+   prod can't edit the repo)
+6. ✅ 5D profile + `/profile` (visitors' profile uses public sessions only)
+7. ✅ 5D profile recs + graph overlay (2D. 3D gets personal strains via the hook
+   but not the rings or "For me"; that waits for a deliberate checkpoint)
+8. ✅ 5E launch hardening (code side). Left for the owner: dashboard setup
+   and the first `develop` → `main` release (checklist in `docs/deploy.md`)
 
 ## Risks / open questions
 

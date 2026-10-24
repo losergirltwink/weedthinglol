@@ -44,13 +44,22 @@ npm.** Native build deps (sharp, unrs-resolver, esbuild) must stay `true` under
   the `[n]ext` bracket trick so `pkill` doesn't match its own command line.
 - `pnpm build` — production build / typecheck.
 - `pnpm build:graph` — **regenerate every `public/graph.<source>.json` (+ the
-  `all` union) from `data/<source>/`.** Run this after any data edit.
+  `all` union) and `generated/strain-catalog.json` from `data/<source>/`.** Run
+  this after any data edit.
 - `pnpm db:generate` — generate a migration from `db/schema.ts` into
   `db/migrations/` (never hand-edit generated SQL). `pnpm db:migrate` — apply
   them to `DATABASE_URL` (default local PGlite; reads `.env.local`).
   `pnpm check:migrations` — fail if the schema changed without a migration (CI).
-- `pnpm check:graph` — rebuild the graphs and **fail if `public/` changed** (the
-  CI drift check). Run on a tree where `public/` is committed.
+- `pnpm promote <strainKey> [--dry-run]` — graduate a crowd or personal strain
+  into `data/curated/` (appends the record + edges to curated parents; existing
+  lines untouched; `lineageStatus: "reported"`, no citations). Then verify, add
+  citations, `pnpm build:graph`. Candidates are ranked on `/queue`.
+- `pnpm journal:export [file]` / `pnpm journal:import <file> [--replace]` —
+  portable JSON backup and restore of personal data (sessions, want-to-try,
+  personal strains; never auth). The import is validated and atomic.
+  `db/backup.ts`, drilled by `db/backup.test.ts`.
+- `pnpm check:graph` — rebuild the graphs and **fail if `public/` or
+  `generated/` changed** (the CI drift check). Run on a tree where `public/` is committed.
 - `pnpm typecheck` (`tsc --noEmit`) · `pnpm lint` (`eslint app scripts data`) ·
   `pnpm test` (Vitest, `*.test.ts` next to the code; `pnpm test:watch`). There
   is no headless browser here, so verify via these + the dev log, not a real
@@ -208,8 +217,89 @@ Principle: **separate at rest, unified at view-time.**
   rolls back via the adapter transaction). **Every mutation must start with
   `await requireOwner()`** (`app/lib/owner.ts`). Owner-only pages use
   `requireOwnerPage()`. Never rely on proxy/middleware or hidden UI for this.
+- **Strain catalog:** `generated/strain-catalog.json` (built from the `all`
+  union, keyed by `strainKey`, layout stripped, lineage as keys) is the
+  server's view of strains. Read it via `app/lib/catalog.ts`. Strain pages render
+  from it, and every write validates `strainKey` against it. Never hand-edit it.
+- **Journal (5C):** `journal_entry` (the UI calls these "sessions"; the table name
+  `session` is taken by auth) + `wishlist_item`. Ratings are stored as
+  **half-star integers 1–10**. `consumed_on` is date-only (pseudonymity).
+  Layers: `app/lib/journal/constants.ts` (dependency-free vocab, safe for client
+  imports) → `input.ts` (zod; the only way writes are parsed; folds side-effects
+  out of effects) → `queries.ts` (takes `db`; **visibility via
+  `includePrivate` = `viewer.isOwner`, never a client flag**) → `actions.ts`
+  (`"use server"`; every export starts with `await requireOwner()`, enforced by
+  `app/lib/actions.test.ts`, which scans every `actions.ts`). Notes render as
+  plain text, never HTML. Pages:
+  `/strain/[key]` (public; noindex for non-curated), `/journal`,
+  `/journal/new`, `/journal/[id]/edit`. The wishlist is shown publicly.
+- **Personal strains (5C):** `personal_strain` (keyed by `strainKey` from the
+  name; the key is immutable, so renames may only change spelling or
+  capitalization). It's a fourth confidence tier, `personal`. Parents may be
+  catalog or personal keys, and edits are cycle-checked. **Always resolve keys
+  through `app/lib/strain-resolver.ts`** (`resolveStrain`, `strainExists`,
+  `strainNames`, `strainOptions`). The catalog wins on collision; a promoted
+  personal row becomes a stale shadow that `/queue` offers to delete. Deleting a
+  live personal strain is refused while sessions, the wishlist or child strains
+  reference it. Personal-strain notes are **owner-only** (they may reveal
+  location). Pages: `/strains/new`, `/strains/[key]/edit`; `/strain/[key]`
+  renders both kinds.
+- **Promotion (5A.4):** `scripts/lib/promote.ts` `planPromotion` (pure) +
+  `scripts/promote.ts` (I/O). `scripts/lib/curated-format.ts` `appendRows`
+  preserves the curated files' hand formatting (tested byte-for-byte against the
+  real files). `/queue` (owner) ranks candidates with `app/lib/promotion.ts`:
+  tried ×10, wishlist +5, personal +3, curated relatives +2 each. Impersonal
+  cross nodes are skipped.
+- **Taste profile (5D):** `app/lib/profile.ts` `computeProfile(sessions, lookup)`
+  is pure. Each session is weighted `w = rating − my mean` (stars), so tags score
+  by what separates good sessions from bad, not by frequency. Effects fall back to
+  the strain's listed effects when none were tagged. Lineage passes `w` to
+  ancestors (×0.5 per hop, up to 6) and an ancestor needs ≥2 rated descendants.
+  Side effects are plain frequency. Cold start is under 5 sessions. `/profile` is
+  public: **visitors' profile is computed from public sessions only**, the owner's
+  from all. Lookup: `profileLookup(db)` in the resolver. Charts use the dataviz
+  diverging pair (blue `#3987e5` above / red `#e66767` below my average, gray
+  midline), validated against the zinc-900 card surface. Bar direction and the
+  signed value encode the sign too. Advice-like pages carry `<Disclaimer />`.
+- **Graph overlay + "For me" (5D):** `GET /api/overlay` (`app/lib/overlay.ts`,
+  per-viewer, `private, no-store`) returns ratings per strain, wishlist,
+  personal strains (no notes) and the profile. Visitors' version uses public
+  sessions only. `useStrainExplorer` fetches it **once** and awaits it with the
+  graph, so personal strains are inserted **before** the renderer mounts
+  (`insertPersonalStrains` in `app/lib/overlay-graph.ts`: parents' centroid +
+  a deterministic offset; orphans in a left column, `all` view only). It also
+  exposes `graphOverlay` (re-keyed to node ids) and `favoritePaths`
+  (`connectingPaths` between the top-5 rated). 2D: the `bordered` node program
+  (`@sigma/node-border` **v3**, matching sigma 3) draws rings: blue/red/gray by
+  rating vs my mean, and a thinner aqua ring for want-to-try (colors in
+  `RING`, validated together on `#09090b`). Rated and want-to-try nodes skip the
+  at-rest muting and keep labels. `RecommendPanel` has a "For me" mode
+  (`recommendForProfile`: effect affinity 0.55, lineage 0.35 with ×0.5 per hop
+  incl. the ancestor itself, type 0.10; penalizes side effects reported in ≥25%
+  of sessions and at least twice; skips tried strains) with reasons and an
+  owner "+" for want-to-try (`setWishlistedAction(..., "rec")`). Overlay props
+  are optional, so the 3D view still compiles without them (not at parity, by
+  design).
 - **Pseudonymity:** the `user` row holds GitHub name/email/avatar. Never render
   them on a public page. The public identity is `SITE_NAME` (`app/lib/site.ts`).
+  **Enforced by `app/lib/pseudonymity.test.ts`:** app code may not read
+  `user.name|email|image`, import the `user` table, or use client session
+  hooks. Only the opaque user id is used.
+- **CSP (launch hardening):** `proxy.ts` (Next 16's renamed middleware) mints a
+  per-request nonce and sets the policy from `app/lib/csp.ts`. Scripts: nonce +
+  `'strict-dynamic'`, with no `'unsafe-inline'` (and `'unsafe-eval'` in dev only).
+  Styles use `'unsafe-inline'` with **no nonce**, because React `style={}`
+  attributes need it and a nonce would disable it. Nonces need dynamic
+  rendering, so the **root layout calls `await connection()`** and every page
+  renders per request. Don't reintroduce static pages, or their scripts get
+  blocked. `next.config.ts` keeps a baseline CSP for non-proxied routes. New
+  third-party scripts/hosts need a CSP change.
+- **SEO/meta:** `siteUrl()` (lenient: never throws) feeds `metadataBase`,
+  `app/sitemap.ts` (curated + personal strains only) and `app/robots.ts`
+  (owner routes disallowed). OG cards come from `app/lib/og.tsx` (site
+  `opengraph-image` + per-strain). `/about` covers methodology, tiers, source
+  attribution and privacy. `PageShell` has a disclaimer footer. Analytics:
+  `@vercel/analytics` (cookieless).
 - **Dynamic vs static:** `getViewer()` reads `headers()` first, so any page using
   it is dynamic and never prerendered. The explorer pages stay static.
 - `server-only` modules can't be imported by Vitest/tsx directly; Vitest aliases
@@ -251,6 +341,17 @@ validation/merge, recommender) + GitHub Actions CI + Dependabot. Milestone 3
 done: Drizzle/Postgres (PGlite locally), Better Auth single-owner gate,
 `/sign-in`, `/account` (passkeys), empty public `/journal`, security headers,
 `docs/deploy.md`. The Vercel/Neon/OAuth dashboard setup is the owner's to do.
+Milestone 4 done: journal sessions (create/edit/delete, ratings, effects,
+context, flavors/terpenes, public/private), want-to-try list, public
+`/strain/[key]` pages, server strain catalog, and a strain-page link from
+`DetailPanel`. Milestone 5 done: personal strains + the promotion workflow
+(`pnpm promote`, `/queue`). Milestone 6 done: taste profile
+(`app/lib/profile.ts`, public `/profile`). Milestone 7 done: personal graph
+overlay (rings, favorite paths, personal strains in the graph) + "For me"
+recommendations. Milestone 8 done (code side): nonce CSP, OG/sitemap/robots,
+`/about` + footer, analytics, JSON backup/restore, pseudonymity audit, release
+checklist (`docs/deploy.md`). Remaining for launch: the owner's dashboard setup
+(`docs/deploy.md`) and the `develop` → `main` release.
 
 Phase 4 follow-ups: the **`crowd` tier is live** — `kushy` (a ~9.5k-strain
 community CSV scrape) compiles to a 1.2k-node connected lineage graph via

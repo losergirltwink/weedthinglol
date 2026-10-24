@@ -7,7 +7,7 @@ import type { StrainGraphType } from "@/app/lib/graph-utils";
 
 // Confidence gradient, most-trusted first — matches the union's curated-wins
 // precedence and the order tiers should read in the key.
-const ORDER: Confidence[] = ["curated", "documented", "crowd"];
+const ORDER: Confidence[] = ["curated", "documented", "crowd", "personal"];
 
 interface Props {
   graph: StrainGraphType;
