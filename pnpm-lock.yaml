@@ -20,6 +20,9 @@ importers:
       '@react-sigma/layout-forceatlas2':
         specifier: ^5.0.6
         version: 5.0.6(graphology-layout-forceatlas2@0.10.1(graphology-types@0.24.8))(graphology@0.26.0(graphology-types@0.24.8))(react@19.2.4)(sigma@3.0.3(graphology-types@0.24.8))
+      '@sigma/node-border':
+        specifier: ^3.0.0
+        version: 3.0.0(sigma@3.0.3(graphology-types@0.24.8))
       better-auth:
         specifier: ^1.7.12
         version: 1.7.12(drizzle-kit@0.31.11)(drizzle-orm@0.45.4(@electric-sql/pglite@0.5.11)(@types/pg@8.23.1)(kysely@0.29.7)(pg@8.23.1))(next@16.2.7(@babel/core@7.29.7)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(pg@8.23.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(vitest@5.0.5(@types/node@20.19.42)(vite@7.3.7(@types/node@20.19.42)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.22.4)))
@@ -1286,6 +1289,11 @@ packages:
 
   '@rtsao/scc@1.1.0':
     resolution: {integrity: sha512-zt6OdqaDoOnJ1ZYsCYGt9YmWzDXl4vQdKTyJev62gFhRGKdx7mcT54V9KIjg+d2wi9EXsPvAPKe7i7WjfVWB8g==}
+
+  '@sigma/node-border@3.0.0':
+    resolution: {integrity: sha512-mE3zUfjvJVuAMhSjiP/zdlkqe0OVTETxd04XHUwof01YqdzTk0OB4ACJIhWrwgsBXl7tTd9lPuKoroafLh8MtQ==}
+    peerDependencies:
+      sigma: '>=3.0.0-beta.17'
 
   '@simplewebauthn/browser@13.3.0':
     resolution: {integrity: sha512-BE/UWv6FOToAdVk0EokzkqQQDOWtNydYlY6+OrmiZ5SCNmb41VehttboTetUM3T/fr6EAFYVXjz4My2wg230rQ==}
@@ -4379,6 +4387,10 @@ snapshots:
     optional: true
 
   '@rtsao/scc@1.1.0': {}
+
+  '@sigma/node-border@3.0.0(sigma@3.0.3(graphology-types@0.24.8))':
+    dependencies:
+      sigma: 3.0.3(graphology-types@0.24.8)
 
   '@simplewebauthn/browser@13.3.0': {}
 

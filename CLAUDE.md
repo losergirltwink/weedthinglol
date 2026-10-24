@@ -257,6 +257,25 @@ Principle: **separate at rest, unified at view-time.**
   diverging pair (blue `#3987e5` above / red `#e66767` below my average, gray
   midline), validated against the zinc-900 card surface. Bar direction and the
   signed value encode the sign too. Advice-like pages carry `<Disclaimer />`.
+- **Graph overlay + "For me" (5D):** `GET /api/overlay` (`app/lib/overlay.ts`,
+  per-viewer, `private, no-store`) returns ratings per strain, wishlist,
+  personal strains (no notes) and the profile. Visitors' version uses public
+  sessions only. `useStrainExplorer` fetches it **once** and awaits it with the
+  graph, so personal strains are inserted **before** the renderer mounts
+  (`insertPersonalStrains` in `app/lib/overlay-graph.ts`: parents' centroid +
+  a deterministic offset; orphans in a left column, `all` view only). It also
+  exposes `graphOverlay` (re-keyed to node ids) and `favoritePaths`
+  (`connectingPaths` between the top-5 rated). 2D: the `bordered` node program
+  (`@sigma/node-border` **v3**, matching sigma 3) draws rings: blue/red/gray by
+  rating vs my mean, and a thinner aqua ring for want-to-try (colors in
+  `RING`, validated together on `#09090b`). Rated and want-to-try nodes skip the
+  at-rest muting and keep labels. `RecommendPanel` has a "For me" mode
+  (`recommendForProfile`: effect affinity 0.55, lineage 0.35 with ×0.5 per hop
+  incl. the ancestor itself, type 0.10; penalizes side effects reported in ≥25%
+  of sessions and at least twice; skips tried strains) with reasons and an
+  owner "+" for want-to-try (`setWishlistedAction(..., "rec")`). Overlay props
+  are optional, so the 3D view still compiles without them (not at parity, by
+  design).
 - **Pseudonymity:** the `user` row holds GitHub name/email/avatar. Never render
   them on a public page. The public identity is `SITE_NAME` (`app/lib/site.ts`).
 - **Dynamic vs static:** `getViewer()` reads `headers()` first, so any page using
@@ -305,7 +324,9 @@ context, flavors/terpenes, public/private), want-to-try list, public
 `/strain/[key]` pages, server strain catalog, and a strain-page link from
 `DetailPanel`. Milestone 5 done: personal strains + the promotion workflow
 (`pnpm promote`, `/queue`). Milestone 6 done: taste profile
-(`app/lib/profile.ts`, public `/profile`).
+(`app/lib/profile.ts`, public `/profile`). Milestone 7 done: personal graph
+overlay (rings, favorite paths, personal strains in the graph) + "For me"
+recommendations.
 
 Phase 4 follow-ups: the **`crowd` tier is live** — `kushy` (a ~9.5k-strain
 community CSV scrape) compiles to a 1.2k-node connected lineage graph via

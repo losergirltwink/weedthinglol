@@ -23,6 +23,7 @@
     "@electric-sql/pglite": "^0.5.11",
     "@react-sigma/core": "^5.0.6",
     "@react-sigma/layout-forceatlas2": "^5.0.6",
+    "@sigma/node-border": "^3.0.0",
     "better-auth": "^1.7.12",
     "drizzle-orm": "^0.45.4",
     "graphology": "^0.26.0",

@@ -10,6 +10,7 @@ import { z } from "zod";
 import { getDb } from "@/db";
 import { requireOwner } from "../owner";
 import { strainExists } from "../strain-resolver";
+import { WISHLIST_SOURCES } from "./constants";
 import { parseEntry, wishlistNote, type FieldErrors } from "./input";
 import {
   addToWishlist,
@@ -68,17 +69,19 @@ export async function setWishlistedAction(
   strainKey: unknown,
   wishlisted: unknown,
   note?: unknown,
+  source?: unknown,
 ): Promise<ActionResult> {
   await requireOwner();
   const key = strainKeyArg.safeParse(strainKey);
   const want = z.boolean().safeParse(wishlisted);
   const noteParsed = wishlistNote.safeParse(note);
-  if (!key.success || !want.success || !noteParsed.success) {
+  const sourceParsed = z.enum(WISHLIST_SOURCES).default("manual").safeParse(source);
+  if (!key.success || !want.success || !noteParsed.success || !sourceParsed.success) {
     return { ok: false, errors: { form: "Invalid request" } };
   }
   const db = await getDb();
   if (!(await strainExists(db, key.data))) return { ok: false, errors: { form: "Unknown strain" } };
-  if (want.data) await addToWishlist(db, key.data, { source: "manual", note: noteParsed.data });
+  if (want.data) await addToWishlist(db, key.data, { source: sourceParsed.data, note: noteParsed.data });
   else await removeFromWishlist(db, key.data);
   revalidateStrain(key.data);
   return { ok: true, data: undefined };

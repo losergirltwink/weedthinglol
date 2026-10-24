@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import { DirectedGraph } from "graphology";
 import { SigmaContainer } from "@react-sigma/core";
 import { NodeCircleProgram, EdgeArrowProgram, EdgeRectangleProgram } from "sigma/rendering";
+import { createNodeBorderProgram } from "@sigma/node-border";
 import "@react-sigma/core/lib/style.css";
 
 import { useStrainExplorer } from "@/app/lib/useStrainExplorer";
@@ -15,12 +16,23 @@ import { FilterLegend } from "./graph/FilterLegend";
 import { ProvenanceLegend } from "./graph/ProvenanceLegend";
 import { DetailPanel } from "./graph/DetailPanel";
 import { RecommendPanel } from "./graph/RecommendPanel";
+import { OverlayLegend } from "./graph/OverlayLegend";
 import { drawHover } from "./graph/drawHover";
+
+// Circle with an optional outer ring for my journal overlay (rating / want-to-try).
+// The ring's color + width come from node attributes set in the reducer.
+const NodeRingProgram = createNodeBorderProgram({
+  borders: [
+    { size: { attribute: "ringSize", defaultValue: 0, mode: "relative" }, color: { attribute: "ringColor" } },
+    { size: { fill: true }, color: { attribute: "color" } },
+  ],
+  drawHover,
+});
 
 const SIGMA_SETTINGS = {
   // Register renderers explicitly — relying on Sigma's implicit defaults left
   // the "circle"/"arrow" programs unregistered in this setup.
-  nodeProgramClasses: { circle: NodeCircleProgram },
+  nodeProgramClasses: { circle: NodeCircleProgram, bordered: NodeRingProgram },
   edgeProgramClasses: { arrow: EdgeArrowProgram, line: EdgeRectangleProgram },
   defaultNodeType: "circle",
   defaultEdgeType: "arrow",
@@ -46,6 +58,12 @@ export default function StrainGraph() {
     recommendedSet,
     handleRecommendations,
     focusSet,
+    overlay,
+    graphOverlay,
+    showFavoritePaths,
+    setShowFavoritePaths,
+    favoritePaths,
+    markWishlisted,
   } = useStrainExplorer();
 
   // Bumped to remount the SigmaContainer once a lost WebGL context is restored.
@@ -76,6 +94,8 @@ export default function StrainGraph() {
             dimLowConfidence={source === ALL_SOURCE.id}
             onSelect={setSelectedId}
             onContextRestored={handleContextRestored}
+            graphOverlay={graphOverlay}
+            favoritePaths={favoritePaths}
           />
         </SigmaContainer>
       ) : (
@@ -95,6 +115,8 @@ export default function StrainGraph() {
             id={selectedId}
             onSelect={setSelectedId}
             onClose={() => setSelectedId(null)}
+            myRating={graphOverlay?.ratings.get(selectedId)}
+            wishlisted={graphOverlay?.wishlist.has(selectedId) ?? false}
           />
         )}
         {graph && (
@@ -103,6 +125,9 @@ export default function StrainGraph() {
             selectedId={selectedId}
             onSelect={setSelectedId}
             onRecommendations={handleRecommendations}
+            overlay={overlay}
+            graphOverlay={graphOverlay}
+            onWishlisted={markWishlisted}
           />
         )}
       </div>
@@ -110,6 +135,11 @@ export default function StrainGraph() {
       {/* Bottom-left: provenance key (union only) + interactive type filter */}
       {graph && (
         <div className="absolute bottom-6 left-6 flex flex-col gap-3">
+          <OverlayLegend
+            graphOverlay={graphOverlay}
+            showFavoritePaths={showFavoritePaths}
+            onToggleFavoritePaths={setShowFavoritePaths}
+          />
           <ProvenanceLegend graph={graph} />
           <FilterLegend activeTypes={activeTypes} onToggle={toggleType} />
         </div>

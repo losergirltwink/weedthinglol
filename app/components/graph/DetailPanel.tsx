@@ -11,6 +11,7 @@ import {
   type StrainType,
 } from "@/app/lib/strains";
 import { sourceById } from "@/data/sources";
+import { Stars } from "@/app/components/journal/Stars";
 import type { StrainGraphType } from "@/app/lib/graph-utils";
 
 interface Props {
@@ -18,9 +19,12 @@ interface Props {
   id: string;
   onSelect: (id: string) => void;
   onClose: () => void;
+  /** My rating summary for this strain, if I've logged it. */
+  myRating?: { avgHalves: number; sessions: number };
+  wishlisted?: boolean;
 }
 
-export function DetailPanel({ graph, id, onSelect, onClose }: Props) {
+export function DetailPanel({ graph, id, onSelect, onClose, myRating, wishlisted = false }: Props) {
   const attrs = graph.getNodeAttributes(id);
   const parents = graph
     .inNeighbors(id)
@@ -98,6 +102,22 @@ export function DetailPanel({ graph, id, onSelect, onClose }: Props) {
             <p className="mt-1.5 text-xs leading-relaxed text-zinc-500">{sourceDef.attribution}</p>
           )}
         </div>
+      )}
+
+      {(myRating || wishlisted) && (
+        <p className="mt-2 flex items-center gap-2 text-xs text-zinc-400">
+          {myRating ? (
+            <>
+              <Stars halves={Math.round(myRating.avgHalves)} />
+              <span>
+                my avg {(myRating.avgHalves / 2).toFixed(1)} · {myRating.sessions} session
+                {myRating.sessions === 1 ? "" : "s"}
+              </span>
+            </>
+          ) : (
+            <span className="text-emerald-400/90">On my want-to-try list</span>
+          )}
+        </p>
       )}
 
       {attrs.effects.length > 0 && (

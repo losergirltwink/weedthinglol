@@ -213,7 +213,8 @@ gets them for free per the 3D policy.
    curated files without reformatting; `/queue` shows the command to run, since
    prod can't edit the repo)
 6. ✅ 5D profile + `/profile` (visitors' profile uses public sessions only)
-7. 5D profile recs + graph overlay (2D. 3D sync only as a deliberate checkpoint)
+7. ✅ 5D profile recs + graph overlay (2D. 3D gets personal strains via the hook
+   but not the rings or "For me"; that waits for a deliberate checkpoint)
 8. 5E launch hardening → first `main` release
 
 ## Risks / open questions
