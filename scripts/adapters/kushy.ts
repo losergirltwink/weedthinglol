@@ -17,6 +17,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 import { STRAIN_TYPES, type Strain, type StrainType, type Lineage } from "@/app/lib/strains";
+import { strainKey } from "@/app/lib/strain-key";
 import type { SourceAdapter, SourceData } from "./types";
 
 interface Patch {
@@ -46,40 +47,12 @@ const normalizeType = (raw: string): StrainType => {
 
 // kushy ids are bare integers and `crosses` references them by that integer;
 // prefix so they never collide with curated slug ids. Cross-source identity is
-// then reconciled by NAME at union time (mergeSources in build-graph.ts), which
-// reuses `normalizeName` below so a kushy "Sour Diesel" folds onto the curated one.
+// then reconciled by NAME at union time (mergeSources in build-graph.ts) via the
+// shared `strainKey`, so a kushy "Sour Diesel" folds onto the curated one.
 const nodeId = (rawId: string) => `kushy-${rawId}`;
 
 const NULLISH = new Set(["", "NULL"]);
 const clean = (v: string | undefined) => (v == null || NULLISH.has(v) ? "" : v);
-
-/** Strip the HTML wrapping kushy descriptions down to a plain-text note. */
-const stripHtml = (s: string): string =>
-  s
-    .replace(/<[^>]*>/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&#39;/g, "'")
-    .replace(/&quot;/g, '"')
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/\s+/g, " ")
-    .trim();
-
-// Fold the common naming inconsistencies so "Skunk No.1", "Skunk #1" and
-// "Skunk No. 1" all key to one canonical form for name->id resolution. Exported
-// because the union merge (build-graph.ts) reuses it to match the SAME strain
-// across sources — cross-source identity must use the same key as within-source
-// de-dup, so a kushy "Sour Diesel" folds onto the curated one.
-export const normalizeName = (name: string): string =>
-  name
-    .trim()
-    .toLowerCase()
-    .replace(/&amp;/g, "&")
-    .replace(/#\s*/g, "no") // "#1" / "# 1" -> "no1"
-    .replace(/\bno\.?\s*/g, "no") // "no. 1" / "no 1" -> "no1"
-    .replace(/['".,()[\]]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
 
 // Delimiters that denote a CROSS inside a strain name: "A x B", "A × B",
 // "A / B". Note: " by " is deliberately excluded — "Super Glue by NOTA" names a
@@ -146,13 +119,14 @@ export function makeKushyAdapter(id: string, dir: string): SourceAdapter {
           .split(",")
           .map((e) => e.trim().toLowerCase())
           .filter(Boolean);
-        const note = stripHtml(get(r, "description"));
+        // The `description` column is deliberately NOT carried over: it's
+        // near-verbatim prose from commercial strain sites, which we can't
+        // republish. Only factual fields (name, type, lineage, effect tags) ship.
         strainById.set(childId, {
           id: childId,
           name: get(r, "name") || rawId,
           type: normalizeType(get(r, "type")),
           ...(effects.length ? { effects } : {}),
-          ...(note ? { note } : {}),
         });
         for (const c of get(r, "crosses").split(",")) {
           const p = c.trim();
@@ -185,7 +159,7 @@ export function makeKushyAdapter(id: string, dir: string): SourceAdapter {
       const idNum = (nid: string) => Number(nid.slice("kushy-".length));
       const repByNorm = new Map<string, string>(); // normalized name -> lowest-id node
       for (const s of strainById.values()) {
-        const key = normalizeName(s.name);
+        const key = strainKey(s.name);
         const cur = repByNorm.get(key);
         if (!cur || idNum(s.id) < idNum(cur)) repByNorm.set(key, s.id);
       }
@@ -201,23 +175,23 @@ export function makeKushyAdapter(id: string, dir: string): SourceAdapter {
         return x;
       };
       for (const [aName, cName] of Object.entries(patch.aliases ?? {})) {
-        const cRep = repByNorm.get(normalizeName(cName));
+        const cRep = repByNorm.get(strainKey(cName));
         if (!cRep) {
           console.warn(`  ↳ kushy alias: canonical "${cName}" not found — skipping "${aName}".`);
           continue;
         }
         const cCanon = follow(cRep);
-        const aRep = repByNorm.get(normalizeName(aName));
+        const aRep = repByNorm.get(strainKey(aName));
         if (aRep && follow(aRep) !== cCanon) aliasRedirect.set(follow(aRep), cCanon);
-        nameAliasIndex.set(normalizeName(aName), cCanon); // also resolves abbrevs in cross-names
+        nameAliasIndex.set(strainKey(aName), cCanon); // also resolves abbrevs in cross-names
       }
       const canon = (nid: string): string => {
-        const rep = repByNorm.get(normalizeName(strainById.get(nid)?.name ?? ""));
+        const rep = repByNorm.get(strainKey(strainById.get(nid)?.name ?? ""));
         return rep ? follow(rep) : nid; // dangling ids (no row) pass through to be dropped
       };
 
       // 4. Collapse each identity to one record, unioning the duplicates'
-      // effects and keeping the first note. Only the canonical node survives.
+      // effects. Only the canonical node survives.
       const canonStrains = new Map<string, Strain>();
       for (const s of strainById.values()) {
         if (canon(s.id) === s.id) {
@@ -230,7 +204,6 @@ export function makeKushyAdapter(id: string, dir: string): SourceAdapter {
         const base = canonStrains.get(c);
         if (!base) continue;
         if (s.effects?.length) base.effects = [...new Set([...(base.effects ?? []), ...s.effects])];
-        if (!base.note && s.note) base.note = s.note;
       }
 
       // 5. Recover lineage encoded in the NAMES. Most kushy crosses live in the
@@ -240,11 +213,11 @@ export function makeKushyAdapter(id: string, dir: string): SourceAdapter {
       // normalized-name index. This is the bulk of the source's real lineage.
       const idByName = new Map<string, string>();
       for (const s of canonStrains.values()) {
-        const key = normalizeName(s.name);
+        const key = strainKey(s.name);
         if (!idByName.has(key)) idByName.set(key, s.id);
       }
       const resolveComponent = (part: string): string | undefined => {
-        const key = normalizeName(part);
+        const key = strainKey(part);
         return nameAliasIndex.get(key) ?? idByName.get(key);
       };
       const nameEdges: Lineage[] = [];
