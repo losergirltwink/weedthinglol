@@ -15,7 +15,7 @@ baseline, and observability are part of the deliverable, not polish for later.
 | Crowd-data worry | **Accuracy/trust + staleness.** Plus licensing, which I added because the site will be public. |
 | Kushy's fate | **Demote to an opt-in "unverified" layer + a promotion queue into curated.** |
 | Audience | **Me, public read-only.** A single owner account. Visitors browse. |
-| Stack | **Vercel + Neon Postgres**, Drizzle ORM, Auth.js |
+| Stack | **Vercel + Neon Postgres**, Drizzle ORM, Better Auth (was Auth.js; see milestone 3) |
 | Auth | **Passkey (WebAuthn) + GitHub OAuth fallback**, owner allowlist |
 | Review shape | Stars + notes, **effects felt**, **session context** (method/dose/time/brand/would-buy), **flavor/terpenes** |
 | Personalization | Taste profile, profile-driven recs, ratings on the graph, want-to-try list |
@@ -96,7 +96,7 @@ CI check (5B) flags orphaned keys instead.
   runs in CI against the preview branch before it touches prod.
 - **Env:** validate env vars at boot with a typed schema (zod). Secrets live
   only in Vercel env. Ship a `.env.example`.
-- **Auth (Auth.js v5):** passkey provider + GitHub. The **owner allowlist** is
+- **Auth (Better Auth):** passkey plugin + GitHub. The **owner allowlist** is
   an env var (`OWNER_GITHUB_ID` / registered passkey). Every mutation is a
   server action or route handler that calls `requireOwner()` itself. Middleware
   is a UX redirect, **not** the security boundary.
@@ -202,8 +202,10 @@ gets them for free per the 3D policy.
    (citation *backfill* still open — 45 curated strains warn)
 2. ✅ 5A.6 Vitest + 5B CI (incl. graph drift check) + Dependabot
    (branch protection on `main` still to switch on)
-3. 5B Vercel/Neon/Drizzle/env + Auth.js owner gate, with an empty `/journal`
-   deployed to preview
+3. ✅ 5B Vercel/Neon/Drizzle/env + owner gate, with an empty `/journal`.
+   Uses **Better Auth** instead of Auth.js (next-auth v5 never shipped stable, and
+   Auth.js now points new projects to Better Auth). Code is done. The dashboard
+   setup in `docs/deploy.md` is still to do.
 4. 5C sessions + wishlist + `/strain/[key]` + log-a-session UI
 5. 5C personal strains + 5A.4 promote script/queue
 6. 5D profile + `/profile`

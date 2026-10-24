@@ -4,11 +4,14 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   resolve: {
-    // Mirror tsconfig's `@/*` path alias.
-    alias: { "@": fileURLToPath(new URL("./", import.meta.url)) },
+    alias: {
+      // Mirror tsconfig's `@/*` path alias.
+      "@": fileURLToPath(new URL("./", import.meta.url)),
+      "server-only": fileURLToPath(new URL("./test/server-only-stub.ts", import.meta.url)),
+    },
   },
   test: {
-    include: ["{app,scripts,data}/**/*.test.ts"],
+    include: ["{app,scripts,data,db}/**/*.test.ts"],
     environment: "node",
   },
 });

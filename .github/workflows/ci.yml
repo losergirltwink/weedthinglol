@@ -51,5 +51,11 @@ jobs:
       - name: Graph drift check
         run: pnpm check:graph
 
+      # Fail if db/schema.ts changed without a generated migration.
+      - name: Migration drift check
+        run: pnpm check:migrations
+
+      # No secrets here on purpose: the build must not depend on runtime env
+      # (validation is lazy; DB-backed routes are dynamic).
       - name: Build
         run: pnpm build

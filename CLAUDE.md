@@ -19,8 +19,12 @@ target a strain they'll like via effect + lineage similarity.
 - **Layout:** ForceAtlas2 baked **offline** into `public/graph.<source>.json`;
   the 2D browser does zero layout. (The 3D view lays out live in-browser.)
 - **Data:** multiple static-JSON **sources** on a confidence gradient (see
-  *Multi-source* below), each compiled to its own baked graph file. No backend,
-  no DB. All state is transient client state.
+  *Multi-source* below), each compiled to its own baked graph file. The graph is
+  static. Personal data (Phase 5) lives in Postgres and overlays it at view time.
+- **Backend (Phase 5):** Postgres via **Drizzle** (Neon in prod; **PGlite**, an
+  in-process WASM Postgres, locally + in tests) and **Better Auth** (passkeys +
+  GitHub, single owner). Hosted on Vercel. See *Backend* below and
+  `docs/deploy.md`.
 
 ## Package manager: pnpm
 
@@ -41,6 +45,10 @@ npm.** Native build deps (sharp, unrs-resolver, esbuild) must stay `true` under
 - `pnpm build` — production build / typecheck.
 - `pnpm build:graph` — **regenerate every `public/graph.<source>.json` (+ the
   `all` union) from `data/<source>/`.** Run this after any data edit.
+- `pnpm db:generate` — generate a migration from `db/schema.ts` into
+  `db/migrations/` (never hand-edit generated SQL). `pnpm db:migrate` — apply
+  them to `DATABASE_URL` (default local PGlite; reads `.env.local`).
+  `pnpm check:migrations` — fail if the schema changed without a migration (CI).
 - `pnpm check:graph` — rebuild the graphs and **fail if `public/` changed** (the
   CI drift check). Run on a tree where `public/` is committed.
 - `pnpm typecheck` (`tsc --noEmit`) · `pnpm lint` (`eslint app scripts data`) ·
@@ -56,7 +64,8 @@ npm.** Native build deps (sharp, unrs-resolver, esbuild) must stay `true` under
 - **`main` is release.** Promote to it only from `develop` (a release merge);
   never branch features off `main` or commit to it directly.
 - **CI** (`.github/workflows/ci.yml`, PRs + pushes to `develop`/`main`):
-  typecheck → lint → test → graph drift check → `next build`. Actions are pinned
+  typecheck → lint → test → graph drift check → migration drift check →
+  `next build` (with **no env/secrets**; the build must never need them). Actions are pinned
   by commit SHA; Dependabot (`.github/dependabot.yml`) bumps them and npm deps
   weekly against `develop` (three / react-force-graph-3d deliberately ignored).
   Next step: branch protection on `main` requiring the `check` job.
@@ -178,6 +187,35 @@ Principle: **separate at rest, unified at view-time.**
   renderer-agnostic.
 - Renderers are browser-only — loaded via `dynamic(..., { ssr: false })`.
 
+## Backend (Phase 5)
+
+- **Env:** `app/lib/env.ts` validates with zod **lazily** (first `env()` call),
+  never at import, because `next build` imports route modules without secrets.
+  Nothing is required locally. Production requires the vars in `.env.example`.
+- **DB:** `db/schema.ts` (source of truth) → `db/migrations/`. `db/client.ts`
+  picks the driver from the URL (`postgres://` → node-postgres, `pglite://<dir>`
+  or `pglite://memory` → PGlite). `db/index.ts` `getDb()` is the app accessor,
+  and local PGlite auto-migrates on first connect. Tests use `freshDb()`
+  (`test/db.ts`), a migrated in-memory DB.
+- **Auth:** `app/lib/auth-config.ts` `makeAuth()` builds Better Auth.
+  `app/lib/auth.ts` `getAuth()` is the lazy server instance and
+  `app/lib/auth-client.ts` is the browser client; the route is
+  `app/api/auth/[...all]`. The auth tables are hand-written in `db/schema.ts`,
+  and `db/schema.test.ts` fails if a Better Auth upgrade expects fields we lack.
+- **Single owner (security boundary):** only the GitHub account whose numeric id
+  is `OWNER_GITHUB_ID` can ever get an account or a session
+  (`app/lib/owner-gate.ts`, enforced in Better Auth DB hooks; a rejected sign-up
+  rolls back via the adapter transaction). **Every mutation must start with
+  `await requireOwner()`** (`app/lib/owner.ts`). Owner-only pages use
+  `requireOwnerPage()`. Never rely on proxy/middleware or hidden UI for this.
+- **Pseudonymity:** the `user` row holds GitHub name/email/avatar. Never render
+  them on a public page. The public identity is `SITE_NAME` (`app/lib/site.ts`).
+- **Dynamic vs static:** `getViewer()` reads `headers()` first, so any page using
+  it is dynamic and never prerendered. The explorer pages stay static.
+- `server-only` modules can't be imported by Vitest/tsx directly; Vitest aliases
+  it to a stub. Keep testable logic in non-`server-only` modules (the
+  `auth-config` / `owner-gate` / `db/client` split).
+
 ## Gotchas
 
 - **Sigma reserves the node `type` attribute** for the rendering-program name.
@@ -209,7 +247,10 @@ messages) for the full arc.
 `docs/phase-5-plan.md`. Milestone 1 (data trust) done: kushy prose stripped +
 relabeled "Unverified (2017 community)", citations/lineage-status schema,
 `strainKey` identity. Milestone 2 done: Vitest suites (strainKey, compile
-validation/merge, recommender) + GitHub Actions CI + Dependabot.
+validation/merge, recommender) + GitHub Actions CI + Dependabot. Milestone 3
+done: Drizzle/Postgres (PGlite locally), Better Auth single-owner gate,
+`/sign-in`, `/account` (passkeys), empty public `/journal`, security headers,
+`docs/deploy.md`. The Vercel/Neon/OAuth dashboard setup is the owner's to do.
 
 Phase 4 follow-ups: the **`crowd` tier is live** — `kushy` (a ~9.5k-strain
 community CSV scrape) compiles to a 1.2k-node connected lineage graph via
