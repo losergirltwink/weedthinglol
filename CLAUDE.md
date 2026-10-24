@@ -61,15 +61,28 @@ npm.** Native build deps (sharp, unrs-resolver, esbuild) must stay `true` under
 
 ## Data workflow (source of truth)
 
-- `data/<source>/strains.json` — `{id, name, type, effects[], note?}` records;
+- `data/<source>/strains.json` — `{id, name, type, effects[], note?, citations?,
+  lineageStatus?}` records;
   `data/<source>/lineage.json` — `{parent, child}` edges. The `curated` source is
   authored directly in this canonical shape. **Edit these, then run
   `pnpm build:graph`.** Never hand-edit any `public/graph.*.json`.
 - `scripts/build-graph.ts` runs each registered source through its adapter, then
-  `compile()`: validates (dup ids, dangling refs, self-loops, dup edges, **cycle
-  detection** — per source) → computes `generation` + `descendants` → bakes
-  color/size/**provenance**/**entity-kind** → ForceAtlas2 → exports
+  `compile()`: validates (dup ids, **dup strainKeys**, citation urls, dangling
+  refs, self-loops, dup edges, **cycle detection** — per source) → computes
+  `generation` + `descendants` → bakes color/size/**provenance**/**entity-kind**/
+  `strainKey` → ForceAtlas2 → exports
   `public/graph.<source>.json`. It also builds the `all` union (see below).
+- **Stable identity (`strainKey`):** `app/lib/strain-key.ts` derives a URL-safe
+  key from the strain NAME (`"Skunk #1"` → `skunk-no1`; `+` stays significant,
+  so Critical ≠ Critical+). It's baked onto every node and is THE identity: the
+  kushy de-dup, the union merge, and anything persisted (reviews, wishlist,
+  `/strain/[key]` URLs — Phase 5) all use it, never the source-namespaced node id.
+  Unique per graph (build error otherwise).
+- **Citations + lineage status (curated):** `citations: {label, url}[]` (http(s)
+  only, rendered as links) and `lineageStatus: confirmed | reported | disputed`,
+  shown in `DetailPanel`. Missing citations on curated records are a build
+  **warning** during the backfill; the plan is to make them an error. Never invent
+  a citation — only add sources you've actually checked.
 - **Effect partition:** `compile()` splits each strain's `effects` against
   `NEGATIVE_EFFECTS` (strains.ts) into desirable `effects` + side-effect
   `negatives` (e.g. dry mouth, paranoid). Source-agnostic — curated has no
@@ -105,6 +118,10 @@ Principle: **separate at rest, unified at view-time.**
   collisions auto-merge; declared aliases fold abbreviations like `Sour D` →
   `Sour Diesel`) before its patch, keeping the result a DAG by construction.
   `leafly.ts` (`makeLeaflyAdapter`) remains as a reference Leafly-shaped seam.
+- **Publishable facts only:** the site is going public, so a scraped source ships
+  only factual fields (name, type, lineage, effect tags). Kushy's `description`
+  column (near-verbatim commercial prose) is deliberately dropped in the adapter.
+  Every `SourceDef` carries an `attribution` string, shown with provenance.
 - **Massaging discipline:** a scraped source keeps `data/<id>/raw/` (never
   hand-edited, re-scrapeable) + `data/<id>/patch.json` (declared
   drop/override/add/**alias** ops). Hand-fixes stay a reviewable diff. Identity
@@ -112,8 +129,8 @@ Principle: **separate at rest, unified at view-time.**
   spellings, never merge distinct-but-related strains (NYC Diesel ≠ Sour Diesel).
   See `data/kushy/` for the worked example (the crowd source).
 - **Union (`all`):** `mergeSources()` folds sources in trust order with
-  **curated-wins precedence**, matching identity by **normalized name** (reusing
-  the kushy adapter's `normalizeName`) — sources have disjoint id namespaces, so a
+  **curated-wins precedence**, matching identity by **`strainKey`** (the same
+  key the kushy de-dup uses) — sources have disjoint id namespaces, so a
   strain in two sources is the same identity under two ids. The higher-trust node
   is kept verbatim (its `strainType`/effects/tier stay — curated Sour Diesel
   stays a sativa) and the lower-trust source's **edges are re-pointed** onto it,
@@ -180,6 +197,11 @@ Phases 0–4 complete: scaffold, curated data + build pipeline, explorer UX
 **multi-source** (swappable data sources + `all` union with provenance; see
 *Multi-source* above and `docs/phase-4-plan.md`). See commit history (detailed
 messages) for the full arc.
+
+**Phase 5 (in progress)** — personal strain journal + public site; plan in
+`docs/phase-5-plan.md`. Milestone 1 (data trust) done: kushy prose stripped +
+relabeled "Unverified (2017 community)", citations/lineage-status schema,
+`strainKey` identity.
 
 Phase 4 follow-ups: the **`crowd` tier is live** — `kushy` (a ~9.5k-strain
 community CSV scrape) compiles to a 1.2k-node connected lineage graph via

@@ -3,7 +3,7 @@
  *
  * Per source (scripts/adapters/* -> data/sources.ts registry):
  *   1. Load canonical { strains, lineage } via the source's adapter
- *   2. Validate (duplicate ids, dangling refs, self-loops, cycles)
+ *   2. Validate (duplicate ids/strainKeys, citations, dangling refs, self-loops, cycles)
  *   3. Compute derived fields: generation depth + descendant count
  *   4. Bake presentation attributes (label, color, size) + provenance tags
  *   5. Run ForceAtlas2 layout offline (deterministic seed)
@@ -19,10 +19,11 @@ import { DirectedGraph } from "graphology";
 import forceAtlas2 from "graphology-layout-forceatlas2";
 
 import type { Strain, Lineage, Confidence } from "../app/lib/strains";
-import { TYPE_COLORS, isNegativeEffect } from "../app/lib/strains";
+import { TYPE_COLORS, LINEAGE_STATUSES, isNegativeEffect } from "../app/lib/strains";
+import { strainKey } from "../app/lib/strain-key";
 import { SOURCES, ALL_SOURCE, type SourceDef } from "../data/sources";
 import { adapterFor } from "./adapters";
-import { normalizeName, CROSS_SPLIT } from "./adapters/kushy";
+import { CROSS_SPLIT } from "./adapters/kushy";
 
 const ROOT = process.cwd();
 
@@ -72,12 +73,29 @@ function compile(
   // 1 + 2. Build graph and validate
   // -------------------------------------------------------------------------
   const seen = new Set<string>();
+  const idByKey = new Map<string, string>();
   for (const s of strains) {
     if (seen.has(s.id)) {
       errors.push(`Duplicate strain id: "${s.id}"`);
       continue;
     }
     seen.add(s.id);
+    // One strainKey per graph: it's the identity persisted data points at, so two
+    // nodes sharing one would make a review ambiguous.
+    const key = strainKey(s.name);
+    const clash = idByKey.get(key);
+    if (!key) errors.push(`Strain "${s.id}" has a name that yields an empty strainKey`);
+    else if (clash) errors.push(`Duplicate strainKey "${key}": "${clash}" and "${s.id}"`);
+    else idByKey.set(key, s.id);
+    if (s.lineageStatus && !LINEAGE_STATUSES.includes(s.lineageStatus)) {
+      errors.push(`Strain "${s.id}" has unknown lineageStatus "${s.lineageStatus}"`);
+    }
+    for (const c of s.citations ?? []) {
+      // Rendered as links on a public site — only http(s), never javascript: etc.
+      if (!c.label?.trim() || !/^https?:\/\//i.test(c.url ?? "")) {
+        errors.push(`Strain "${s.id}" has an invalid citation (needs a label and http(s) url)`);
+      }
+    }
     // Partition effects into desirable vs side-effects to avoid. Crowd sources
     // mix the two in one list; splitting here (source-agnostic) keeps the
     // recommender's effect-similarity clean and feeds the avoid-penalty.
@@ -86,12 +104,15 @@ function compile(
     for (const e of s.effects ?? []) (isNegativeEffect(e) ? negatives : effects).push(e);
     graph.addNode(s.id, {
       label: s.name,
+      strainKey: key,
       // NB: stored as `strainType`, not `type` — Sigma reserves the node
       // `type` attribute for selecting the rendering program.
       strainType: s.type,
       effects,
       negatives,
       ...(s.note ? { note: s.note } : {}),
+      ...(s.citations?.length ? { citations: s.citations } : {}),
+      ...(s.lineageStatus ? { lineageStatus: s.lineageStatus } : {}),
     });
   }
 
@@ -182,6 +203,7 @@ function compile(
   // -------------------------------------------------------------------------
   let crossShaped = 0;
   let crossTagged = 0;
+  let curatedUncited = 0;
   graph.forEachNode((node, attrs) => {
     const gen = generation(node);
     const desc = descendants(node);
@@ -191,6 +213,7 @@ function compile(
       crossShaped++;
       if (nameKind.kind === "cross") crossTagged++;
     }
+    if (prov.confidence === "curated" && !attrs.citations) curatedUncited++;
     graph.mergeNodeAttributes(node, {
       generation: gen,
       descendants: desc,
@@ -209,6 +232,12 @@ function compile(
       `  ↳ entity-kind: ${crossTagged}/${crossShaped} cross-shaped name(s) tagged \`cross\` ` +
         `(${crossShaped - crossTagged} straggler(s): cross-shaped but not all parents resolved).`,
     );
+  }
+
+  // Citations are a soft requirement for curated records while they're backfilled
+  // (docs/phase-5-plan.md 5A.2); this becomes a hard error once that's done.
+  if (curatedUncited > 0) {
+    console.warn(`  ⚠ citations: ${curatedUncited} curated strain(s) have no citation yet.`);
   }
 
   graph.forEachEdge((edge) => {
@@ -258,9 +287,11 @@ function compile(
 /**
  * Merge all sources into one canonical dataset with curated-wins precedence.
  * SOURCES is ordered by trust, so the FIRST writer of an identity wins. Identity
- * is matched by NORMALIZED NAME, not id — sources use disjoint id namespaces
+ * is matched by NAME (strainKey), not id — sources use disjoint id namespaces
  * (curated slugs vs `kushy-N`), so a strain in two sources arrives as two ids for
- * the SAME thing. The higher-trust node is kept verbatim (its strainType,
+ * the SAME thing. strainKey is the identity every graph bakes and persisted data
+ * references, so the union can never hold two nodes per key. The higher-trust
+ * node is kept verbatim (its strainType,
  * effects, tier — curated stays a sativa); the duplicate is dropped and the
  * lower-trust source's EDGES are re-pointed onto the surviving node, so community
  * lineage attaches to the verified core instead of a shadow duplicate.
@@ -276,7 +307,7 @@ function mergeSources(sources: SourceDef[]): {
 } {
   const strainById = new Map<string, Strain>();
   const origin = new Map<string, Provenance>();
-  const canonByName = new Map<string, string>(); // normalized name -> surviving id
+  const canonByKey = new Map<string, string>(); // strainKey -> surviving id
   const idRemap = new Map<string, string>(); // dropped duplicate id -> surviving id
   const remap = (id: string) => idRemap.get(id) ?? id;
 
@@ -307,8 +338,8 @@ function mergeSources(sources: SourceDef[]): {
     // Strains first: claim each identity by name, or fold onto the higher-trust
     // node already holding it. Build the id remap before this source's edges.
     for (const s of data.strains) {
-      const name = normalizeName(s.name);
-      const owner = canonByName.get(name);
+      const key = strainKey(s.name);
+      const owner = canonByKey.get(key);
       if (owner) {
         idRemap.set(s.id, owner); // same strain already claimed — fold, keep winner
         folded++;
@@ -316,7 +347,7 @@ function mergeSources(sources: SourceDef[]): {
       }
       strainById.set(s.id, s);
       origin.set(s.id, { source: src.id, confidence: src.confidence });
-      canonByName.set(name, s.id);
+      canonByKey.set(key, s.id);
     }
 
     // Edges: re-point both endpoints onto surviving ids, drop self-loops/dupes,

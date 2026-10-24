@@ -32,6 +32,21 @@ export const NEGATIVE_EFFECTS: ReadonlySet<string> = new Set([
 export const isNegativeEffect = (effect: string): boolean =>
   NEGATIVE_EFFECTS.has(effect.trim().toLowerCase());
 
+/**
+ * How well-established a strain's recorded parentage is (Phase 5). `confirmed`:
+ * breeder-stated or otherwise well-documented; `reported`: commonly claimed but
+ * unverified; `disputed`: sources disagree. Absent = not yet assessed.
+ */
+export type LineageStatus = "confirmed" | "reported" | "disputed";
+
+export const LINEAGE_STATUSES: readonly LineageStatus[] = ["confirmed", "reported", "disputed"];
+
+/** A reference backing a curated record. `url` must be http(s). */
+export interface Citation {
+  label: string;
+  url: string;
+}
+
 /** A curated source record (data/strains.json). No layout/derived fields. */
 export interface Strain {
   id: string;
@@ -39,6 +54,8 @@ export interface Strain {
   type: StrainType;
   effects?: string[];
   note?: string;
+  citations?: Citation[];
+  lineageStatus?: LineageStatus;
 }
 
 /** A parent -> child relationship (data/lineage.json). */
@@ -50,6 +67,9 @@ export interface Lineage {
 /** Node attributes baked into public/graph.<source>.json by the build script. */
 export interface StrainNodeAttributes {
   label: string;
+  // Stable, source-independent identity (see app/lib/strain-key.ts). Persisted
+  // references (reviews, wishlist, URLs) use this, never the node id.
+  strainKey: string;
   // Stored as `strainType` (not `type`) because Sigma reserves the node
   // `type` attribute for the rendering program name.
   strainType: StrainType;
@@ -65,6 +85,8 @@ export interface StrainNodeAttributes {
   // subtle 2D resting de-emphasis. See classifyNameKind in build-graph.ts.
   nameKind: "named" | "cross";
   note?: string;
+  citations?: Citation[];
+  lineageStatus?: LineageStatus;
   generation: number;
   descendants: number;
   x: number;
@@ -88,7 +110,7 @@ export const TYPE_COLORS: Record<StrainType, string> = {
 export const CONFIDENCE_META: Record<Confidence, { label: string; color: string; blurb: string }> = {
   curated: { label: "Curated", color: "#22c55e", blurb: "Hand-verified" }, // green
   documented: { label: "Documented", color: "#f59e0b", blurb: "Structured scrape" }, // amber
-  crowd: { label: "Crowd", color: "#ef4444", blurb: "Community-sourced, less verified" }, // red
+  crowd: { label: "Unverified", color: "#ef4444", blurb: "Community-sourced, not verified" }, // red
 };
 
 /** Display order for the legend / filters. */
