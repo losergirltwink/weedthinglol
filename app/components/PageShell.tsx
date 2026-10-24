@@ -23,6 +23,9 @@ export function PageShell({
             <Link href="/journal" className="text-zinc-400 hover:text-zinc-100">
               Journal
             </Link>
+            <Link href="/profile" className="text-zinc-400 hover:text-zinc-100">
+              Profile
+            </Link>
             {actions}
           </div>
         </nav>

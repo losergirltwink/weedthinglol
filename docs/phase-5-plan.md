@@ -212,7 +212,7 @@ gets them for free per the 3D policy.
 5. ✅ 5C personal strains + 5A.4 promote script/queue (promotion appends to
    curated files without reformatting; `/queue` shows the command to run, since
    prod can't edit the repo)
-6. 5D profile + `/profile`
+6. ✅ 5D profile + `/profile` (visitors' profile uses public sessions only)
 7. 5D profile recs + graph overlay (2D. 3D sync only as a deliberate checkpoint)
 8. 5E launch hardening → first `main` release
 

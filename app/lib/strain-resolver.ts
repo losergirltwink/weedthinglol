@@ -11,6 +11,7 @@ import type { Db } from "@/db/client";
 import { personalStrain } from "@/db/schema";
 import { catalogIndex, getCatalogEntry, hasStrain } from "./catalog";
 import { getPersonalStrain, listPersonalStrains, personalChildrenOf, type PersonalStrain } from "./personal/queries";
+import type { ProfileStrain } from "./profile";
 import type { CatalogEntry, Confidence } from "./strains";
 
 export interface ResolvedStrain extends CatalogEntry {
@@ -98,4 +99,15 @@ function generationOf(p: PersonalStrain, all: PersonalStrain[]): number {
     return g;
   };
   return gen(p.strainKey, new Set());
+}
+
+/** Strain lookup for the taste profile: catalog + personal (catalog wins). */
+export async function profileLookup(db: Db): Promise<(key: string) => ProfileStrain | undefined> {
+  const personal = new Map((await listPersonalStrains(db)).map((p) => [p.strainKey, p]));
+  return (key) => {
+    const c = getCatalogEntry(key);
+    if (c) return { name: c.name, strainType: c.strainType, effects: c.effects, parents: c.parents };
+    const p = personal.get(key);
+    return p ? { name: p.name, strainType: p.strainType, effects: [], parents: p.parentKeys } : undefined;
+  };
 }

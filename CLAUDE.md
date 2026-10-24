@@ -246,6 +246,17 @@ Principle: **separate at rest, unified at view-time.**
   real files). `/queue` (owner) ranks candidates with `app/lib/promotion.ts`:
   tried ×10, wishlist +5, personal +3, curated relatives +2 each. Impersonal
   cross nodes are skipped.
+- **Taste profile (5D):** `app/lib/profile.ts` `computeProfile(sessions, lookup)`
+  is pure. Each session is weighted `w = rating − my mean` (stars), so tags score
+  by what separates good sessions from bad, not by frequency. Effects fall back to
+  the strain's listed effects when none were tagged. Lineage passes `w` to
+  ancestors (×0.5 per hop, up to 6) and an ancestor needs ≥2 rated descendants.
+  Side effects are plain frequency. Cold start is under 5 sessions. `/profile` is
+  public: **visitors' profile is computed from public sessions only**, the owner's
+  from all. Lookup: `profileLookup(db)` in the resolver. Charts use the dataviz
+  diverging pair (blue `#3987e5` above / red `#e66767` below my average, gray
+  midline), validated against the zinc-900 card surface. Bar direction and the
+  signed value encode the sign too. Advice-like pages carry `<Disclaimer />`.
 - **Pseudonymity:** the `user` row holds GitHub name/email/avatar. Never render
   them on a public page. The public identity is `SITE_NAME` (`app/lib/site.ts`).
 - **Dynamic vs static:** `getViewer()` reads `headers()` first, so any page using
@@ -293,7 +304,8 @@ Milestone 4 done: journal sessions (create/edit/delete, ratings, effects,
 context, flavors/terpenes, public/private), want-to-try list, public
 `/strain/[key]` pages, server strain catalog, and a strain-page link from
 `DetailPanel`. Milestone 5 done: personal strains + the promotion workflow
-(`pnpm promote`, `/queue`).
+(`pnpm promote`, `/queue`). Milestone 6 done: taste profile
+(`app/lib/profile.ts`, public `/profile`).
 
 Phase 4 follow-ups: the **`crowd` tier is live** — `kushy` (a ~9.5k-strain
 community CSV scrape) compiles to a 1.2k-node connected lineage graph via
