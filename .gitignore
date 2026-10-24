@@ -43,3 +43,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# personal-data exports (pnpm journal:export) — never commit
+journal-backup-*.json

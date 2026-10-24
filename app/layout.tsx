@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { connection } from "next/server";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
+
+import { SITE_DESCRIPTION, SITE_NAME, siteUrl } from "./lib/site";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -12,16 +16,27 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Strain Genealogy Explorer",
-  description: "An explorable graph of cannabis strains and their lineage.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    metadataBase: siteUrl(),
+    title: { default: SITE_NAME, template: `%s · ${SITE_NAME}` },
+    description: SITE_DESCRIPTION,
+    applicationName: SITE_NAME,
+    openGraph: { type: "website", siteName: SITE_NAME },
+    twitter: { card: "summary_large_image" },
+  };
+}
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Render every page per request: the CSP nonce (proxy.ts) can only be stamped
+  // onto scripts during dynamic rendering — a prerendered page would ship
+  // un-nonced scripts that the policy blocks.
+  await connection();
+
   return (
     <html
       lang="en"
@@ -31,7 +46,11 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {children}
+        {/* Cookieless, privacy-friendly page analytics (no-op outside Vercel). */}
+        <Analytics />
+      </body>
     </html>
   );
 }

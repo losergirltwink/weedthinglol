@@ -69,3 +69,43 @@ Nothing is required: `pnpm dev` uses an on-disk PGlite database in `.data/`
 that migrates itself. To sign in locally, copy `.env.example` to `.env.local`
 and fill in the dev OAuth app + `OWNER_GITHUB_ID`. Delete `.data/` to reset
 the local database.
+
+## Backups & restore
+
+Two independent layers:
+
+1. **Neon point-in-time restore** (provider-side). Neon keeps a history window
+   (its length depends on your plan). To recover: Neon console → **Branches →
+   Restore** to a timestamp (or create a branch from that point and repoint
+   `DATABASE_URL` at it).
+2. **Portable JSON export** (provider-independent; your data, your file):
+
+   ```sh
+   DATABASE_URL_UNPOOLED=<neon direct url> pnpm journal:export backup.json
+   DATABASE_URL_UNPOOLED=<target url>      pnpm journal:import backup.json [--replace]
+   ```
+
+   It covers journal sessions, the want-to-try list and personal strains. Auth
+   tables are excluded on purpose (sign in again to recreate them). Import is
+   validated and atomic, and refuses to merge into existing data without
+   `--replace`. `journal-backup-*.json` is gitignored. **Never commit a
+   backup**: it contains private sessions.
+
+**Restore drill:** `db/backup.test.ts` exports from one database, imports into
+a fresh one, and requires identical data. It runs in CI. Before relying on it
+in production, also do one manual run against a Neon branch: export prod,
+import into a fresh branch, and spot-check `/journal` on a preview pointed at
+it.
+
+## Release checklist (develop → main)
+
+1. CI green on `develop` (typecheck, lint, tests, graph + migration drift,
+   build).
+2. Preview deploy of `develop` checked: explorer loads, `/journal`, `/profile`,
+   a strain page, sign-in on the production domain only.
+3. `pnpm journal:export` a fresh backup of production.
+4. Open the release PR `develop` → `main` and merge. Vercel runs
+   `pnpm db:migrate && pnpm build` against production.
+5. Smoke test production: response headers include the nonce CSP, `/robots.txt`
+   and `/sitemap.xml` resolve, an OG image renders, and nothing on a public
+   page shows your GitHub name, email or avatar.

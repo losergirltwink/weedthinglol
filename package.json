@@ -16,6 +16,8 @@
     "test:watch": "vitest",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "node --env-file-if-exists=.env.local --import tsx db/migrate.ts",
+    "journal:export": "node --env-file-if-exists=.env.local --import tsx scripts/journal-backup.ts export",
+    "journal:import": "node --env-file-if-exists=.env.local --import tsx scripts/journal-backup.ts import",
     "check:migrations": "drizzle-kit generate && test -z \"$(git status --porcelain -- db/migrations/)\""
   },
   "dependencies": {
@@ -24,6 +26,7 @@
     "@react-sigma/core": "^5.0.6",
     "@react-sigma/layout-forceatlas2": "^5.0.6",
     "@sigma/node-border": "^3.0.0",
+    "@vercel/analytics": "^2.0.1",
     "better-auth": "^1.7.12",
     "drizzle-orm": "^0.45.4",
     "graphology": "^0.26.0",

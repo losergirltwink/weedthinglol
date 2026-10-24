@@ -215,7 +215,8 @@ gets them for free per the 3D policy.
 6. ✅ 5D profile + `/profile` (visitors' profile uses public sessions only)
 7. ✅ 5D profile recs + graph overlay (2D. 3D gets personal strains via the hook
    but not the rings or "For me"; that waits for a deliberate checkpoint)
-8. 5E launch hardening → first `main` release
+8. ✅ 5E launch hardening (code side). Left for the owner: dashboard setup
+   and the first `develop` → `main` release (checklist in `docs/deploy.md`)
 
 ## Risks / open questions
 

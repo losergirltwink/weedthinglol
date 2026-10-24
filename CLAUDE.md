@@ -54,6 +54,10 @@ npm.** Native build deps (sharp, unrs-resolver, esbuild) must stay `true` under
   into `data/curated/` (appends the record + edges to curated parents; existing
   lines untouched; `lineageStatus: "reported"`, no citations). Then verify, add
   citations, `pnpm build:graph`. Candidates are ranked on `/queue`.
+- `pnpm journal:export [file]` / `pnpm journal:import <file> [--replace]` —
+  portable JSON backup and restore of personal data (sessions, want-to-try,
+  personal strains; never auth). The import is validated and atomic.
+  `db/backup.ts`, drilled by `db/backup.test.ts`.
 - `pnpm check:graph` — rebuild the graphs and **fail if `public/` or
   `generated/` changed** (the CI drift check). Run on a tree where `public/` is committed.
 - `pnpm typecheck` (`tsc --noEmit`) · `pnpm lint` (`eslint app scripts data`) ·
@@ -278,6 +282,24 @@ Principle: **separate at rest, unified at view-time.**
   design).
 - **Pseudonymity:** the `user` row holds GitHub name/email/avatar. Never render
   them on a public page. The public identity is `SITE_NAME` (`app/lib/site.ts`).
+  **Enforced by `app/lib/pseudonymity.test.ts`:** app code may not read
+  `user.name|email|image`, import the `user` table, or use client session
+  hooks. Only the opaque user id is used.
+- **CSP (launch hardening):** `proxy.ts` (Next 16's renamed middleware) mints a
+  per-request nonce and sets the policy from `app/lib/csp.ts`. Scripts: nonce +
+  `'strict-dynamic'`, with no `'unsafe-inline'` (and `'unsafe-eval'` in dev only).
+  Styles use `'unsafe-inline'` with **no nonce**, because React `style={}`
+  attributes need it and a nonce would disable it. Nonces need dynamic
+  rendering, so the **root layout calls `await connection()`** and every page
+  renders per request. Don't reintroduce static pages, or their scripts get
+  blocked. `next.config.ts` keeps a baseline CSP for non-proxied routes. New
+  third-party scripts/hosts need a CSP change.
+- **SEO/meta:** `siteUrl()` (lenient: never throws) feeds `metadataBase`,
+  `app/sitemap.ts` (curated + personal strains only) and `app/robots.ts`
+  (owner routes disallowed). OG cards come from `app/lib/og.tsx` (site
+  `opengraph-image` + per-strain). `/about` covers methodology, tiers, source
+  attribution and privacy. `PageShell` has a disclaimer footer. Analytics:
+  `@vercel/analytics` (cookieless).
 - **Dynamic vs static:** `getViewer()` reads `headers()` first, so any page using
   it is dynamic and never prerendered. The explorer pages stay static.
 - `server-only` modules can't be imported by Vitest/tsx directly; Vitest aliases
@@ -326,7 +348,10 @@ context, flavors/terpenes, public/private), want-to-try list, public
 (`pnpm promote`, `/queue`). Milestone 6 done: taste profile
 (`app/lib/profile.ts`, public `/profile`). Milestone 7 done: personal graph
 overlay (rings, favorite paths, personal strains in the graph) + "For me"
-recommendations.
+recommendations. Milestone 8 done (code side): nonce CSP, OG/sitemap/robots,
+`/about` + footer, analytics, JSON backup/restore, pseudonymity audit, release
+checklist (`docs/deploy.md`). Remaining for launch: the owner's dashboard setup
+(`docs/deploy.md`) and the `develop` → `main` release.
 
 Phase 4 follow-ups: the **`crowd` tier is live** — `kushy` (a ~9.5k-strain
 community CSV scrape) compiles to a 1.2k-node connected lineage graph via
