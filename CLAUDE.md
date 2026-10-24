@@ -41,8 +41,12 @@ npm.** Native build deps (sharp, unrs-resolver, esbuild) must stay `true` under
 - `pnpm build` — production build / typecheck.
 - `pnpm build:graph` — **regenerate every `public/graph.<source>.json` (+ the
   `all` union) from `data/<source>/`.** Run this after any data edit.
-- `pnpm exec tsc --noEmit` — typecheck. There is no headless browser here, so
-  verify via tsc + eslint + the dev log, not a real render.
+- `pnpm check:graph` — rebuild the graphs and **fail if `public/` changed** (the
+  CI drift check). Run on a tree where `public/` is committed.
+- `pnpm typecheck` (`tsc --noEmit`) · `pnpm lint` (`eslint app scripts data`) ·
+  `pnpm test` (Vitest, `*.test.ts` next to the code; `pnpm test:watch`). There
+  is no headless browser here, so verify via these + the dev log, not a real
+  render.
 
 ## Branching & releases
 
@@ -50,14 +54,16 @@ npm.** Native build deps (sharp, unrs-resolver, esbuild) must stay `true` under
   `develop`. It's the integration/staging branch and tracks `origin/develop`.
   Default working branch.
 - **`main` is release.** Promote to it only from `develop` (a release merge);
-  never branch features off `main` or commit to it directly. A CI/CD pipeline on
-  `main` is planned but not wired yet, so this is convention for now, not
-  enforcement — branch protection on `main` is the natural next step once CI
-  exists.
+  never branch features off `main` or commit to it directly.
+- **CI** (`.github/workflows/ci.yml`, PRs + pushes to `develop`/`main`):
+  typecheck → lint → test → graph drift check → `next build`. Actions are pinned
+  by commit SHA; Dependabot (`.github/dependabot.yml`) bumps them and npm deps
+  weekly against `develop` (three / react-force-graph-3d deliberately ignored).
+  Next step: branch protection on `main` requiring the `check` job.
 - **End-of-change checklist:** `pnpm build:graph` (if any `data/` or build code
-  changed; never hand-edit `public/graph.*.json`) → `pnpm exec tsc --noEmit` →
-  `pnpm exec eslint app scripts data` → skim the dev log, since there's no
-  headless render. Commit messages end with the `Co-Authored-By` trailer.
+  changed; never hand-edit `public/graph.*.json`) → `pnpm typecheck` →
+  `pnpm lint` → `pnpm test` → skim the dev log, since there's no headless
+  render. Commit messages end with the `Co-Authored-By` trailer.
 
 ## Data workflow (source of truth)
 
@@ -66,8 +72,9 @@ npm.** Native build deps (sharp, unrs-resolver, esbuild) must stay `true` under
   `data/<source>/lineage.json` — `{parent, child}` edges. The `curated` source is
   authored directly in this canonical shape. **Edit these, then run
   `pnpm build:graph`.** Never hand-edit any `public/graph.*.json`.
-- `scripts/build-graph.ts` runs each registered source through its adapter, then
-  `compile()`: validates (dup ids, **dup strainKeys**, citation urls, dangling
+- `scripts/build-graph.ts` (thin driver) runs each registered source through its
+  adapter, then `compile()` from `scripts/lib/compile.ts` (the pure, tested core,
+  alongside `mergeSources` + `classifyNameKind`): validates (dup ids, **dup strainKeys**, citation urls, dangling
   refs, self-loops, dup edges, **cycle detection** — per source) → computes
   `generation` + `descendants` → bakes color/size/**provenance**/**entity-kind**/
   `strainKey` → ForceAtlas2 → exports
@@ -201,7 +208,8 @@ messages) for the full arc.
 **Phase 5 (in progress)** — personal strain journal + public site; plan in
 `docs/phase-5-plan.md`. Milestone 1 (data trust) done: kushy prose stripped +
 relabeled "Unverified (2017 community)", citations/lineage-status schema,
-`strainKey` identity.
+`strainKey` identity. Milestone 2 done: Vitest suites (strainKey, compile
+validation/merge, recommender) + GitHub Actions CI + Dependabot.
 
 Phase 4 follow-ups: the **`crowd` tier is live** — `kushy` (a ~9.5k-strain
 community CSV scrape) compiles to a 1.2k-node connected lineage graph via

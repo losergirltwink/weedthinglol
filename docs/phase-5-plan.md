@@ -200,7 +200,8 @@ gets them for free per the 3D policy.
 
 1. ✅ 5A.1–3 data trust (strip prose, citations schema, relabel) + `strainKey`
    (citation *backfill* still open — 45 curated strains warn)
-2. 5A.6 Vitest + 5B CI (incl. graph drift check) → branch protection on `main`
+2. ✅ 5A.6 Vitest + 5B CI (incl. graph drift check) + Dependabot
+   (branch protection on `main` still to switch on)
 3. 5B Vercel/Neon/Drizzle/env + Auth.js owner gate, with an empty `/journal`
    deployed to preview
 4. 5C sessions + wishlist + `/strain/[key]` + log-a-session UI
