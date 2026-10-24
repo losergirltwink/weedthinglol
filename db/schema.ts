@@ -6,7 +6,24 @@
 // public/graph.*.json). Personal data that references a strain does so by
 // `strainKey` (app/lib/strain-key.ts), never a node id.
 
-import { bigint, boolean, index, integer, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+
+import { METHODS, TIMES_OF_DAY, WISHLIST_SOURCES } from "@/app/lib/journal/constants";
+import {
+  bigint,
+  boolean,
+  check,
+  date,
+  index,
+  integer,
+  pgEnum,
+  pgTable,
+  smallint,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+} from "drizzle-orm/pg-core";
 
 // ---------------------------------------------------------------------------
 // Auth (Better Auth). Field names are dictated by Better Auth's model; verify
@@ -110,4 +127,54 @@ export const rateLimit = pgTable("rate_limit", {
   key: text("key").notNull().unique(),
   count: integer("count").notNull(),
   lastRequest: bigint("last_request", { mode: "number" }).notNull(),
+});
+
+// ---------------------------------------------------------------------------
+// Journal (Phase 5C). One row per consumption session — many per strain. The
+// table is `journal_entry` because `session` is the auth table; the UI calls
+// these "sessions".
+// ---------------------------------------------------------------------------
+
+export const consumptionMethod = pgEnum("consumption_method", METHODS);
+export const timeOfDay = pgEnum("time_of_day", TIMES_OF_DAY);
+
+export const journalEntry = pgTable(
+  "journal_entry",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    strainKey: text("strain_key").notNull(),
+    // Half-star units, 1–10 (= 0.5–5 stars). Integer, so no float rounding.
+    ratingHalves: smallint("rating_halves").notNull(),
+    notes: text("notes"),
+    effectsFelt: text("effects_felt").array().notNull().default(sql`'{}'::text[]`),
+    negativesFelt: text("negatives_felt").array().notNull().default(sql`'{}'::text[]`),
+    flavors: text("flavors").array().notNull().default(sql`'{}'::text[]`),
+    terpenes: text("terpenes").array().notNull().default(sql`'{}'::text[]`),
+    method: consumptionMethod("method"),
+    dose: text("dose"),
+    timeOfDay: timeOfDay("time_of_day"),
+    brand: text("brand"),
+    batch: text("batch"),
+    wouldBuyAgain: boolean("would_buy_again"),
+    // Date only — exact timestamps would reveal routines (pseudonymity).
+    consumedOn: date("consumed_on", { mode: "string" }).notNull(),
+    isPublic: boolean("is_public").notNull().default(true),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("journal_entry_strain_key_idx").on(t.strainKey),
+    index("journal_entry_consumed_on_idx").on(t.consumedOn),
+    check("journal_entry_rating_range", sql`${t.ratingHalves} between 1 and 10`),
+  ],
+);
+
+export const wishlistSource = pgEnum("wishlist_source", WISHLIST_SOURCES);
+
+/** Strains I want to try. At most one row per strain. */
+export const wishlistItem = pgTable("wishlist_item", {
+  strainKey: text("strain_key").primaryKey(),
+  source: wishlistSource("source").notNull().default("manual"),
+  note: text("note"),
+  addedAt: timestamp("added_at", { withTimezone: true }).notNull().defaultNow(),
 });

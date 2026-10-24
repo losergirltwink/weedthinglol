@@ -5,7 +5,7 @@
 import { DirectedGraph } from "graphology";
 import forceAtlas2 from "graphology-layout-forceatlas2";
 
-import type { Strain, Lineage, Confidence } from "../../app/lib/strains";
+import type { Catalog, CatalogEntry, Strain, Lineage, Confidence } from "../../app/lib/strains";
 import { TYPE_COLORS, LINEAGE_STATUSES, isNegativeEffect } from "../../app/lib/strains";
 import { strainKey } from "../../app/lib/strain-key";
 import type { SourceDef } from "../../data/sources";
@@ -358,4 +358,41 @@ export function mergeSources(inputs: { src: SourceDef; data: SourceData }[]): {
   );
 
   return { strains: [...strainById.values()], lineage, origin };
+}
+
+/**
+ * Project a compiled graph into the server-side catalog: one entry per strain,
+ * keyed by strainKey, layout stripped, lineage expressed as strainKeys.
+ */
+export function buildCatalog(graph: DirectedGraph): Catalog {
+  const keyOf = (id: string) => graph.getNodeAttribute(id, "strainKey") as string;
+  const byKey = (a: string, b: string) => a.localeCompare(b);
+  const entries: [string, CatalogEntry][] = graph.mapNodes((id, a) => {
+    const entry: CatalogEntry = {
+      key: a.strainKey,
+      name: a.label,
+      strainType: a.strainType,
+      effects: a.effects,
+      negatives: a.negatives,
+      nameKind: a.nameKind,
+      source: a.source,
+      confidence: a.confidence,
+      ...(a.note ? { note: a.note } : {}),
+      ...(a.citations ? { citations: a.citations } : {}),
+      ...(a.lineageStatus ? { lineageStatus: a.lineageStatus } : {}),
+      generation: a.generation,
+      descendants: a.descendants,
+      parents: graph.inNeighbors(id).map(keyOf).sort(byKey),
+      children: graph.outNeighbors(id).map(keyOf).sort(byKey),
+    };
+    return [a.strainKey, entry];
+  });
+  entries.sort(([a], [b]) => byKey(a, b));
+  return Object.fromEntries(entries);
+}
+
+/** One entry per line: stable, reviewable diffs without pretty-print bloat. */
+export function serializeCatalog(catalog: Catalog): string {
+  const lines = Object.entries(catalog).map(([k, v]) => `${JSON.stringify(k)}:${JSON.stringify(v)}`);
+  return `{\n${lines.join(",\n")}\n}\n`;
 }

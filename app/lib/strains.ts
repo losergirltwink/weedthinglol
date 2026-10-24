@@ -115,3 +115,29 @@ export const CONFIDENCE_META: Record<Confidence, { label: string; color: string;
 
 /** Display order for the legend / filters. */
 export const STRAIN_TYPES: StrainType[] = ["landrace", "sativa", "hybrid", "indica"];
+
+/**
+ * One strain in the server-side catalog (generated/strain-catalog.json), keyed
+ * by strainKey and built from the `all` union. Strain pages and write-path
+ * validation read this instead of the much larger layout graph. Lineage is
+ * expressed in strainKeys, never node ids.
+ */
+export interface CatalogEntry {
+  key: string;
+  name: string;
+  strainType: StrainType;
+  effects: string[];
+  negatives: string[];
+  nameKind: "named" | "cross";
+  source: string;
+  confidence: Confidence;
+  note?: string;
+  citations?: Citation[];
+  lineageStatus?: LineageStatus;
+  generation: number;
+  descendants: number;
+  parents: string[];
+  children: string[];
+}
+
+export type Catalog = Record<string, CatalogEntry>;

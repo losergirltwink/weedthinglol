@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import {
   CONFIDENCE_META,
   TYPE_COLORS,
@@ -43,7 +45,12 @@ export function DetailPanel({ graph, id, onSelect, onClose }: Props) {
   return (
     <div className="rounded-lg bg-zinc-900/90 p-4 text-sm shadow-lg backdrop-blur">
       <div className="flex items-start justify-between gap-2">
-        <h2 className="text-lg font-semibold text-zinc-50">{attrs.label}</h2>
+        <div>
+          <h2 className="text-lg font-semibold text-zinc-50">{attrs.label}</h2>
+          <Link href={`/strain/${attrs.strainKey}`} className="text-xs text-zinc-500 hover:text-zinc-200">
+            Strain page & journal →
+          </Link>
+        </div>
         <button
           onClick={onClose}
           aria-label="Close"

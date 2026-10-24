@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { Lineage, Strain } from "@/app/lib/strains";
 import type { SourceDef } from "@/data/sources";
-import { classifyNameKind, compile, mergeSources, type Provenance } from "./compile";
+import { buildCatalog, classifyNameKind, compile, mergeSources, serializeCatalog, type Provenance } from "./compile";
 
 const curatedProv = (): Provenance => ({ source: "curated", confidence: "curated" });
 const s = (id: string, name: string, extra: Partial<Strain> = {}): Strain => ({
@@ -183,5 +183,37 @@ describe("mergeSources", () => {
       },
     ]);
     expect(lineage).toEqual([e("a", "b")]);
+  });
+});
+
+describe("buildCatalog", () => {
+  const { graph } = compile(
+    [s("p", "Skunk #1"), s("c", "Super Skunk", { lineageStatus: "reported" })],
+    [e("p", "c")],
+    curatedProv,
+  );
+  const catalog = buildCatalog(graph);
+
+  it("keys entries by strainKey and expresses lineage in strainKeys", () => {
+    expect(Object.keys(catalog)).toEqual(["skunk-no1", "super-skunk"]);
+    expect(catalog["super-skunk"]).toMatchObject({
+      name: "Super Skunk",
+      parents: ["skunk-no1"],
+      children: [],
+      lineageStatus: "reported",
+      confidence: "curated",
+    });
+    expect(catalog["skunk-no1"].children).toEqual(["super-skunk"]);
+  });
+
+  it("strips layout attributes", () => {
+    expect(catalog["skunk-no1"]).not.toHaveProperty("x");
+    expect(catalog["skunk-no1"]).not.toHaveProperty("color");
+  });
+
+  it("serializes to parseable one-entry-per-line JSON", () => {
+    const text = serializeCatalog(catalog);
+    expect(JSON.parse(text)).toEqual(catalog);
+    expect(text.trim().split("\n")).toHaveLength(2 + Object.keys(catalog).length);
   });
 });

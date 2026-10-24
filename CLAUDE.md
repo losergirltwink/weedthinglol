@@ -44,13 +44,14 @@ npm.** Native build deps (sharp, unrs-resolver, esbuild) must stay `true` under
   the `[n]ext` bracket trick so `pkill` doesn't match its own command line.
 - `pnpm build` — production build / typecheck.
 - `pnpm build:graph` — **regenerate every `public/graph.<source>.json` (+ the
-  `all` union) from `data/<source>/`.** Run this after any data edit.
+  `all` union) and `generated/strain-catalog.json` from `data/<source>/`.** Run
+  this after any data edit.
 - `pnpm db:generate` — generate a migration from `db/schema.ts` into
   `db/migrations/` (never hand-edit generated SQL). `pnpm db:migrate` — apply
   them to `DATABASE_URL` (default local PGlite; reads `.env.local`).
   `pnpm check:migrations` — fail if the schema changed without a migration (CI).
-- `pnpm check:graph` — rebuild the graphs and **fail if `public/` changed** (the
-  CI drift check). Run on a tree where `public/` is committed.
+- `pnpm check:graph` — rebuild the graphs and **fail if `public/` or
+  `generated/` changed** (the CI drift check). Run on a tree where `public/` is committed.
 - `pnpm typecheck` (`tsc --noEmit`) · `pnpm lint` (`eslint app scripts data`) ·
   `pnpm test` (Vitest, `*.test.ts` next to the code; `pnpm test:watch`). There
   is no headless browser here, so verify via these + the dev log, not a real
@@ -208,6 +209,21 @@ Principle: **separate at rest, unified at view-time.**
   rolls back via the adapter transaction). **Every mutation must start with
   `await requireOwner()`** (`app/lib/owner.ts`). Owner-only pages use
   `requireOwnerPage()`. Never rely on proxy/middleware or hidden UI for this.
+- **Strain catalog:** `generated/strain-catalog.json` (built from the `all`
+  union, keyed by `strainKey`, layout stripped, lineage as keys) is the
+  server's view of strains. Read it via `app/lib/catalog.ts`. Strain pages render
+  from it, and every write validates `strainKey` against it. Never hand-edit it.
+- **Journal (5C):** `journal_entry` (the UI calls these "sessions"; the table name
+  `session` is taken by auth) + `wishlist_item`. Ratings are stored as
+  **half-star integers 1–10**. `consumed_on` is date-only (pseudonymity).
+  Layers: `app/lib/journal/constants.ts` (dependency-free vocab, safe for client
+  imports) → `input.ts` (zod; the only way writes are parsed; folds side-effects
+  out of effects) → `queries.ts` (takes `db`; **visibility via
+  `includePrivate` = `viewer.isOwner`, never a client flag**) → `actions.ts`
+  (`"use server"`; every export starts with `await requireOwner()`, enforced by
+  `actions.test.ts`). Notes render as plain text, never HTML. Pages:
+  `/strain/[key]` (public; noindex for non-curated), `/journal`,
+  `/journal/new`, `/journal/[id]/edit`. The wishlist is shown publicly.
 - **Pseudonymity:** the `user` row holds GitHub name/email/avatar. Never render
   them on a public page. The public identity is `SITE_NAME` (`app/lib/site.ts`).
 - **Dynamic vs static:** `getViewer()` reads `headers()` first, so any page using
@@ -251,6 +267,10 @@ validation/merge, recommender) + GitHub Actions CI + Dependabot. Milestone 3
 done: Drizzle/Postgres (PGlite locally), Better Auth single-owner gate,
 `/sign-in`, `/account` (passkeys), empty public `/journal`, security headers,
 `docs/deploy.md`. The Vercel/Neon/OAuth dashboard setup is the owner's to do.
+Milestone 4 done: journal sessions (create/edit/delete, ratings, effects,
+context, flavors/terpenes, public/private), want-to-try list, public
+`/strain/[key]` pages, server strain catalog, and a strain-page link from
+`DetailPanel`.
 
 Phase 4 follow-ups: the **`crowd` tier is live** — `kushy` (a ~9.5k-strain
 community CSV scrape) compiles to a 1.2k-node connected lineage graph via
