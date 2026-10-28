@@ -24,7 +24,7 @@
     "@better-auth/passkey": "^1.7.12",
     "@electric-sql/pglite": "^0.5.11",
     "@react-sigma/core": "^5.0.6",
-    "@react-sigma/layout-forceatlas2": "^5.0.6",
+    "@react-sigma/layout-forceatlas2": "^6.0.0",
     "@sigma/node-border": "^3.0.0",
     "@vercel/analytics": "^2.0.1",
     "better-auth": "^1.7.12",
