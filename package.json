@@ -4,37 +4,60 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "stop": "pkill -f '[n]ext dev|[n]ext-server' && echo 'dev server stopped' || echo 'no dev server running'",
     "build:graph": "tsx scripts/build-graph.ts",
+    "promote": "node --env-file-if-exists=.env.local --import tsx scripts/promote.ts",
+    "check:graph": "pnpm build:graph && git diff --exit-code --stat -- public/ generated/ && test -z \"$(git status --porcelain -- public/ generated/)\"",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint app scripts data",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "node --env-file-if-exists=.env.local --import tsx db/migrate.ts",
+    "journal:export": "node --env-file-if-exists=.env.local --import tsx scripts/journal-backup.ts export",
+    "journal:import": "node --env-file-if-exists=.env.local --import tsx scripts/journal-backup.ts import",
+    "check:migrations": "drizzle-kit generate && test -z \"$(git status --porcelain -- db/migrations/)\""
   },
   "dependencies": {
+    "@better-auth/passkey": "^1.7.12",
+    "@electric-sql/pglite": "^0.5.11",
     "@react-sigma/core": "^5.0.6",
     "@react-sigma/layout-forceatlas2": "^5.0.6",
+    "@sigma/node-border": "^3.0.0",
+    "@vercel/analytics": "^2.0.1",
+    "better-auth": "^1.7.12",
+    "drizzle-orm": "^0.45.4",
     "graphology": "^0.26.0",
     "graphology-layout-forceatlas2": "^0.10.1",
     "next": "16.2.7",
+    "pg": "^8.23.1",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-force-graph-3d": "^1.29.1",
+    "server-only": "^0.0.1",
     "sigma": "^3.0.3",
     "three": "^0.184.0",
-    "three-spritetext": "^1.10.0"
+    "three-spritetext": "^1.10.0",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/three": "^0.184.1",
+    "drizzle-kit": "^0.31.11",
     "eslint": "^9",
     "eslint-config-next": "16.2.7",
     "graphology-layout": "^0.6.1",
     "graphology-types": "^0.24.8",
     "tailwindcss": "^4",
     "tsx": "^4.22.4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^5.0.5"
   },
   "packageManager": "pnpm@11.5.2+sha512.71c631e382066efc25625d5cf029075de07b61b37f6e27350fbd84b1bda5864c8c1967adc280776b45c30a715c0359a3be08fef42d5bb09e2b99029979692916"
 }

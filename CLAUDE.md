@@ -19,8 +19,12 @@ target a strain they'll like via effect + lineage similarity.
 - **Layout:** ForceAtlas2 baked **offline** into `public/graph.<source>.json`;
   the 2D browser does zero layout. (The 3D view lays out live in-browser.)
 - **Data:** multiple static-JSON **sources** on a confidence gradient (see
-  *Multi-source* below), each compiled to its own baked graph file. No backend,
-  no DB. All state is transient client state.
+  *Multi-source* below), each compiled to its own baked graph file. The graph is
+  static. Personal data (Phase 5) lives in Postgres and overlays it at view time.
+- **Backend (Phase 5):** Postgres via **Drizzle** (Neon in prod; **PGlite**, an
+  in-process WASM Postgres, locally + in tests) and **Better Auth** (passkeys +
+  GitHub, single owner). Hosted on Vercel. See *Backend* below and
+  `docs/deploy.md`.
 
 ## Package manager: pnpm
 
@@ -34,23 +38,76 @@ npm.** Native build deps (sharp, unrs-resolver, esbuild) must stay `true` under
 - `pnpm dev` — dev server (port 3000). Browser console errors are captured in
   `.next/dev/logs/next-development.log` — useful since the renderers are
   client-only and won't surface via `curl`.
+- `pnpm stop` — kill a running dev server (the `next dev` / `next-server` /
+  worker tree). For a server started detached/in the background with no terminal
+  to `Ctrl-C`; no-op (friendly message, exits 0) when nothing is running. Uses
+  the `[n]ext` bracket trick so `pkill` doesn't match its own command line.
 - `pnpm build` — production build / typecheck.
 - `pnpm build:graph` — **regenerate every `public/graph.<source>.json` (+ the
-  `all` union) from `data/<source>/`.** Run this after any data edit.
-- `pnpm exec tsc --noEmit` — typecheck. There is no headless browser here, so
-  verify via tsc + eslint + the dev log, not a real render.
+  `all` union) and `generated/strain-catalog.json` from `data/<source>/`.** Run
+  this after any data edit.
+- `pnpm db:generate` — generate a migration from `db/schema.ts` into
+  `db/migrations/` (never hand-edit generated SQL). `pnpm db:migrate` — apply
+  them to `DATABASE_URL` (default local PGlite; reads `.env.local`).
+  `pnpm check:migrations` — fail if the schema changed without a migration (CI).
+- `pnpm promote <strainKey> [--dry-run]` — graduate a crowd or personal strain
+  into `data/curated/` (appends the record + edges to curated parents; existing
+  lines untouched; `lineageStatus: "reported"`, no citations). Then verify, add
+  citations, `pnpm build:graph`. Candidates are ranked on `/queue`.
+- `pnpm journal:export [file]` / `pnpm journal:import <file> [--replace]` —
+  portable JSON backup and restore of personal data (sessions, want-to-try,
+  personal strains; never auth). The import is validated and atomic.
+  `db/backup.ts`, drilled by `db/backup.test.ts`.
+- `pnpm check:graph` — rebuild the graphs and **fail if `public/` or
+  `generated/` changed** (the CI drift check). Run on a tree where `public/` is committed.
+- `pnpm typecheck` (`tsc --noEmit`) · `pnpm lint` (`eslint app scripts data`) ·
+  `pnpm test` (Vitest, `*.test.ts` next to the code; `pnpm test:watch`). There
+  is no headless browser here, so verify via these + the dev log, not a real
+  render.
+
+## Branching & releases
+
+- **`develop` is the base for all changes.** Branch off `develop`, PR back into
+  `develop`. It's the integration/staging branch and tracks `origin/develop`.
+  Default working branch.
+- **`main` is release.** Promote to it only from `develop` (a release merge);
+  never branch features off `main` or commit to it directly.
+- **CI** (`.github/workflows/ci.yml`, PRs + pushes to `develop`/`main`):
+  typecheck → lint → test → graph drift check → migration drift check →
+  `next build` (with **no env/secrets**; the build must never need them). Actions are pinned
+  by commit SHA; Dependabot (`.github/dependabot.yml`) bumps them and npm deps
+  weekly against `develop` (three / react-force-graph-3d deliberately ignored).
+  Next step: branch protection on `main` requiring the `check` job.
+- **End-of-change checklist:** `pnpm build:graph` (if any `data/` or build code
+  changed; never hand-edit `public/graph.*.json`) → `pnpm typecheck` →
+  `pnpm lint` → `pnpm test` → skim the dev log, since there's no headless
+  render. Commit messages end with the `Co-Authored-By` trailer.
 
 ## Data workflow (source of truth)
 
-- `data/<source>/strains.json` — `{id, name, type, effects[], note?}` records;
+- `data/<source>/strains.json` — `{id, name, type, effects[], note?, citations?,
+  lineageStatus?}` records;
   `data/<source>/lineage.json` — `{parent, child}` edges. The `curated` source is
   authored directly in this canonical shape. **Edit these, then run
   `pnpm build:graph`.** Never hand-edit any `public/graph.*.json`.
-- `scripts/build-graph.ts` runs each registered source through its adapter, then
-  `compile()`: validates (dup ids, dangling refs, self-loops, dup edges, **cycle
-  detection** — per source) → computes `generation` + `descendants` → bakes
-  color/size/**provenance**/**entity-kind** → ForceAtlas2 → exports
+- `scripts/build-graph.ts` (thin driver) runs each registered source through its
+  adapter, then `compile()` from `scripts/lib/compile.ts` (the pure, tested core,
+  alongside `mergeSources` + `classifyNameKind`): validates (dup ids, **dup strainKeys**, citation urls, dangling
+  refs, self-loops, dup edges, **cycle detection** — per source) → computes
+  `generation` + `descendants` → bakes color/size/**provenance**/**entity-kind**/
+  `strainKey` → ForceAtlas2 → exports
   `public/graph.<source>.json`. It also builds the `all` union (see below).
+- **Stable identity (`strainKey`):** `app/lib/strain-key.ts` derives a URL-safe
+  key from the strain NAME (`"Skunk #1"` → `skunk-no1`; `+` stays significant,
+  so Critical ≠ Critical+). It's baked onto every node and is THE identity: the
+  kushy de-dup, the union merge, and anything persisted (reviews, wishlist,
+  `/strain/[key]` URLs — Phase 5) all use it, never the source-namespaced node id.
+  Unique per graph (build error otherwise).
+- **Citations + lineage status (curated):** `citations: {label, url}[]` (http(s)
+  only, rendered as links) and `lineageStatus: confirmed | reported | disputed`,
+  shown in `DetailPanel`. Missing citations on curated records are a build
+  **warning** during the backfill; the plan is to make them an error. Never invent
+  a citation — only add sources you've actually checked.
 - **Effect partition:** `compile()` splits each strain's `effects` against
   `NEGATIVE_EFFECTS` (strains.ts) into desirable `effects` + side-effect
   `negatives` (e.g. dry mouth, paranoid). Source-agnostic — curated has no
@@ -86,6 +143,10 @@ Principle: **separate at rest, unified at view-time.**
   collisions auto-merge; declared aliases fold abbreviations like `Sour D` →
   `Sour Diesel`) before its patch, keeping the result a DAG by construction.
   `leafly.ts` (`makeLeaflyAdapter`) remains as a reference Leafly-shaped seam.
+- **Publishable facts only:** the site is going public, so a scraped source ships
+  only factual fields (name, type, lineage, effect tags). Kushy's `description`
+  column (near-verbatim commercial prose) is deliberately dropped in the adapter.
+  Every `SourceDef` carries an `attribution` string, shown with provenance.
 - **Massaging discipline:** a scraped source keeps `data/<id>/raw/` (never
   hand-edited, re-scrapeable) + `data/<id>/patch.json` (declared
   drop/override/add/**alias** ops). Hand-fixes stay a reviewable diff. Identity
@@ -93,8 +154,8 @@ Principle: **separate at rest, unified at view-time.**
   spellings, never merge distinct-but-related strains (NYC Diesel ≠ Sour Diesel).
   See `data/kushy/` for the worked example (the crowd source).
 - **Union (`all`):** `mergeSources()` folds sources in trust order with
-  **curated-wins precedence**, matching identity by **normalized name** (reusing
-  the kushy adapter's `normalizeName`) — sources have disjoint id namespaces, so a
+  **curated-wins precedence**, matching identity by **`strainKey`** (the same
+  key the kushy de-dup uses) — sources have disjoint id namespaces, so a
   strain in two sources is the same identity under two ids. The higher-trust node
   is kept verbatim (its `strainType`/effects/tier stay — curated Sour Diesel
   stays a sativa) and the lower-trust source's **edges are re-pointed** onto it,
@@ -135,6 +196,116 @@ Principle: **separate at rest, unified at view-time.**
   renderer-agnostic.
 - Renderers are browser-only — loaded via `dynamic(..., { ssr: false })`.
 
+## Backend (Phase 5)
+
+- **Env:** `app/lib/env.ts` validates with zod **lazily** (first `env()` call),
+  never at import, because `next build` imports route modules without secrets.
+  Nothing is required locally. Production requires the vars in `.env.example`.
+- **DB:** `db/schema.ts` (source of truth) → `db/migrations/`. `db/client.ts`
+  picks the driver from the URL (`postgres://` → node-postgres, `pglite://<dir>`
+  or `pglite://memory` → PGlite). `db/index.ts` `getDb()` is the app accessor,
+  and local PGlite auto-migrates on first connect. Tests use `freshDb()`
+  (`test/db.ts`), a migrated in-memory DB.
+- **Auth:** `app/lib/auth-config.ts` `makeAuth()` builds Better Auth.
+  `app/lib/auth.ts` `getAuth()` is the lazy server instance and
+  `app/lib/auth-client.ts` is the browser client; the route is
+  `app/api/auth/[...all]`. The auth tables are hand-written in `db/schema.ts`,
+  and `db/schema.test.ts` fails if a Better Auth upgrade expects fields we lack.
+- **Single owner (security boundary):** only the GitHub account whose numeric id
+  is `OWNER_GITHUB_ID` can ever get an account or a session
+  (`app/lib/owner-gate.ts`, enforced in Better Auth DB hooks; a rejected sign-up
+  rolls back via the adapter transaction). **Every mutation must start with
+  `await requireOwner()`** (`app/lib/owner.ts`). Owner-only pages use
+  `requireOwnerPage()`. Never rely on proxy/middleware or hidden UI for this.
+- **Strain catalog:** `generated/strain-catalog.json` (built from the `all`
+  union, keyed by `strainKey`, layout stripped, lineage as keys) is the
+  server's view of strains. Read it via `app/lib/catalog.ts`. Strain pages render
+  from it, and every write validates `strainKey` against it. Never hand-edit it.
+- **Journal (5C):** `journal_entry` (the UI calls these "sessions"; the table name
+  `session` is taken by auth) + `wishlist_item`. Ratings are stored as
+  **half-star integers 1–10**. `consumed_on` is date-only (pseudonymity).
+  Layers: `app/lib/journal/constants.ts` (dependency-free vocab, safe for client
+  imports) → `input.ts` (zod; the only way writes are parsed; folds side-effects
+  out of effects) → `queries.ts` (takes `db`; **visibility via
+  `includePrivate` = `viewer.isOwner`, never a client flag**) → `actions.ts`
+  (`"use server"`; every export starts with `await requireOwner()`, enforced by
+  `app/lib/actions.test.ts`, which scans every `actions.ts`). Notes render as
+  plain text, never HTML. Pages:
+  `/strain/[key]` (public; noindex for non-curated), `/journal`,
+  `/journal/new`, `/journal/[id]/edit`. The wishlist is shown publicly.
+- **Personal strains (5C):** `personal_strain` (keyed by `strainKey` from the
+  name; the key is immutable, so renames may only change spelling or
+  capitalization). It's a fourth confidence tier, `personal`. Parents may be
+  catalog or personal keys, and edits are cycle-checked. **Always resolve keys
+  through `app/lib/strain-resolver.ts`** (`resolveStrain`, `strainExists`,
+  `strainNames`, `strainOptions`). The catalog wins on collision; a promoted
+  personal row becomes a stale shadow that `/queue` offers to delete. Deleting a
+  live personal strain is refused while sessions, the wishlist or child strains
+  reference it. Personal-strain notes are **owner-only** (they may reveal
+  location). Pages: `/strains/new`, `/strains/[key]/edit`; `/strain/[key]`
+  renders both kinds.
+- **Promotion (5A.4):** `scripts/lib/promote.ts` `planPromotion` (pure) +
+  `scripts/promote.ts` (I/O). `scripts/lib/curated-format.ts` `appendRows`
+  preserves the curated files' hand formatting (tested byte-for-byte against the
+  real files). `/queue` (owner) ranks candidates with `app/lib/promotion.ts`:
+  tried ×10, wishlist +5, personal +3, curated relatives +2 each. Impersonal
+  cross nodes are skipped.
+- **Taste profile (5D):** `app/lib/profile.ts` `computeProfile(sessions, lookup)`
+  is pure. Each session is weighted `w = rating − my mean` (stars), so tags score
+  by what separates good sessions from bad, not by frequency. Effects fall back to
+  the strain's listed effects when none were tagged. Lineage passes `w` to
+  ancestors (×0.5 per hop, up to 6) and an ancestor needs ≥2 rated descendants.
+  Side effects are plain frequency. Cold start is under 5 sessions. `/profile` is
+  public: **visitors' profile is computed from public sessions only**, the owner's
+  from all. Lookup: `profileLookup(db)` in the resolver. Charts use the dataviz
+  diverging pair (blue `#3987e5` above / red `#e66767` below my average, gray
+  midline), validated against the zinc-900 card surface. Bar direction and the
+  signed value encode the sign too. Advice-like pages carry `<Disclaimer />`.
+- **Graph overlay + "For me" (5D):** `GET /api/overlay` (`app/lib/overlay.ts`,
+  per-viewer, `private, no-store`) returns ratings per strain, wishlist,
+  personal strains (no notes) and the profile. Visitors' version uses public
+  sessions only. `useStrainExplorer` fetches it **once** and awaits it with the
+  graph, so personal strains are inserted **before** the renderer mounts
+  (`insertPersonalStrains` in `app/lib/overlay-graph.ts`: parents' centroid +
+  a deterministic offset; orphans in a left column, `all` view only). It also
+  exposes `graphOverlay` (re-keyed to node ids) and `favoritePaths`
+  (`connectingPaths` between the top-5 rated). 2D: the `bordered` node program
+  (`@sigma/node-border` **v3**, matching sigma 3) draws rings: blue/red/gray by
+  rating vs my mean, and a thinner aqua ring for want-to-try (colors in
+  `RING`, validated together on `#09090b`). Rated and want-to-try nodes skip the
+  at-rest muting and keep labels. `RecommendPanel` has a "For me" mode
+  (`recommendForProfile`: effect affinity 0.55, lineage 0.35 with ×0.5 per hop
+  incl. the ancestor itself, type 0.10; penalizes side effects reported in ≥25%
+  of sessions and at least twice; skips tried strains) with reasons and an
+  owner "+" for want-to-try (`setWishlistedAction(..., "rec")`). Overlay props
+  are optional, so the 3D view still compiles without them (not at parity, by
+  design).
+- **Pseudonymity:** the `user` row holds GitHub name/email/avatar. Never render
+  them on a public page. The public identity is `SITE_NAME` (`app/lib/site.ts`).
+  **Enforced by `app/lib/pseudonymity.test.ts`:** app code may not read
+  `user.name|email|image`, import the `user` table, or use client session
+  hooks. Only the opaque user id is used.
+- **CSP (launch hardening):** `proxy.ts` (Next 16's renamed middleware) mints a
+  per-request nonce and sets the policy from `app/lib/csp.ts`. Scripts: nonce +
+  `'strict-dynamic'`, with no `'unsafe-inline'` (and `'unsafe-eval'` in dev only).
+  Styles use `'unsafe-inline'` with **no nonce**, because React `style={}`
+  attributes need it and a nonce would disable it. Nonces need dynamic
+  rendering, so the **root layout calls `await connection()`** and every page
+  renders per request. Don't reintroduce static pages, or their scripts get
+  blocked. `next.config.ts` keeps a baseline CSP for non-proxied routes. New
+  third-party scripts/hosts need a CSP change.
+- **SEO/meta:** `siteUrl()` (lenient: never throws) feeds `metadataBase`,
+  `app/sitemap.ts` (curated + personal strains only) and `app/robots.ts`
+  (owner routes disallowed). OG cards come from `app/lib/og.tsx` (site
+  `opengraph-image` + per-strain). `/about` covers methodology, tiers, source
+  attribution and privacy. `PageShell` has a disclaimer footer. Analytics:
+  `@vercel/analytics` (cookieless).
+- **Dynamic vs static:** `getViewer()` reads `headers()` first, so any page using
+  it is dynamic and never prerendered. The explorer pages stay static.
+- `server-only` modules can't be imported by Vitest/tsx directly; Vitest aliases
+  it to a stub. Keep testable logic in non-`server-only` modules (the
+  `auth-config` / `owner-gate` / `db/client` split).
+
 ## Gotchas
 
 - **Sigma reserves the node `type` attribute** for the rendering-program name.
@@ -162,6 +333,26 @@ Phases 0–4 complete: scaffold, curated data + build pipeline, explorer UX
 *Multi-source* above and `docs/phase-4-plan.md`). See commit history (detailed
 messages) for the full arc.
 
+**Phase 5 (in progress)** — personal strain journal + public site; plan in
+`docs/phase-5-plan.md`. Milestone 1 (data trust) done: kushy prose stripped +
+relabeled "Unverified (2017 community)", citations/lineage-status schema,
+`strainKey` identity. Milestone 2 done: Vitest suites (strainKey, compile
+validation/merge, recommender) + GitHub Actions CI + Dependabot. Milestone 3
+done: Drizzle/Postgres (PGlite locally), Better Auth single-owner gate,
+`/sign-in`, `/account` (passkeys), empty public `/journal`, security headers,
+`docs/deploy.md`. The Vercel/Neon/OAuth dashboard setup is the owner's to do.
+Milestone 4 done: journal sessions (create/edit/delete, ratings, effects,
+context, flavors/terpenes, public/private), want-to-try list, public
+`/strain/[key]` pages, server strain catalog, and a strain-page link from
+`DetailPanel`. Milestone 5 done: personal strains + the promotion workflow
+(`pnpm promote`, `/queue`). Milestone 6 done: taste profile
+(`app/lib/profile.ts`, public `/profile`). Milestone 7 done: personal graph
+overlay (rings, favorite paths, personal strains in the graph) + "For me"
+recommendations. Milestone 8 done (code side): nonce CSP, OG/sitemap/robots,
+`/about` + footer, analytics, JSON backup/restore, pseudonymity audit, release
+checklist (`docs/deploy.md`). Remaining for launch: the owner's dashboard setup
+(`docs/deploy.md`) and the `develop` → `main` release.
+
 Phase 4 follow-ups: the **`crowd` tier is live** — `kushy` (a ~9.5k-strain
 community CSV scrape) compiles to a 1.2k-node connected lineage graph via
 name-mining + identity de-dup; it replaced the old `expanded-demo` sample. The **provenance legend** is also
@@ -172,9 +363,13 @@ current resting-dim is binary curated-vs-rest — fine for two tiers, worth revi
 `documented` tier returns); a higher-fidelity `documented`-tier source (kushy's
 `crosses` column is sparse; the seam is proven if a better dump appears).
 
-Data-quality + recommender pass (post-Phase-4): effects are partitioned into
-desirable vs `negatives` (see *Data workflow*); the recommender gained type
-affinity, an avoid-penalty for side-effects, and richer "why" explanations.
+Data-quality + recommender pass (post-Phase-4, merged to `main` as PR #2):
+effects are partitioned into desirable vs `negatives` (see *Data workflow*); the
+recommender gained type affinity, an avoid-penalty for side-effects, and richer
+"why" explanations. A new **entity-kind axis** (`nameKind`) classifies named
+cultivars vs `cross`-expression nodes — orthogonal to the trust/provenance axis —
+driving a gentle recommender down-weight + a subtle 2D resting de-emphasis (see
+*Entity-kind* under *Data workflow*; 435/1224 union nodes are `cross`).
 Cross-source identity is reconciled by name at union time (see *Multi-source*).
 
 **Deferred enhancement — curated improvements & source reviews:** thickening the

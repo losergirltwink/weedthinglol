@@ -7,9 +7,11 @@ export type StrainType = "indica" | "sativa" | "hybrid" | "landrace";
 /**
  * Confidence tier of a data source (Phase 4). A gradient from hand-verified
  * (`curated`) to scraped-but-structured (`documented`) to sparse/contested
- * (`crowd`). Drives union-merge precedence and provenance display.
+ * (`crowd`). Drives union-merge precedence and provenance display. `personal`
+ * (Phase 5) marks strains the owner added from the journal (DB-backed, not part
+ * of any baked source; lineage is the owner's own claim).
  */
-export type Confidence = "curated" | "documented" | "crowd";
+export type Confidence = "curated" | "documented" | "crowd" | "personal";
 
 /**
  * Effects that are side-effects to AVOID, not desirable traits. Crowd sources
@@ -32,6 +34,21 @@ export const NEGATIVE_EFFECTS: ReadonlySet<string> = new Set([
 export const isNegativeEffect = (effect: string): boolean =>
   NEGATIVE_EFFECTS.has(effect.trim().toLowerCase());
 
+/**
+ * How well-established a strain's recorded parentage is (Phase 5). `confirmed`:
+ * breeder-stated or otherwise well-documented; `reported`: commonly claimed but
+ * unverified; `disputed`: sources disagree. Absent = not yet assessed.
+ */
+export type LineageStatus = "confirmed" | "reported" | "disputed";
+
+export const LINEAGE_STATUSES: readonly LineageStatus[] = ["confirmed", "reported", "disputed"];
+
+/** A reference backing a curated record. `url` must be http(s). */
+export interface Citation {
+  label: string;
+  url: string;
+}
+
 /** A curated source record (data/strains.json). No layout/derived fields. */
 export interface Strain {
   id: string;
@@ -39,6 +56,8 @@ export interface Strain {
   type: StrainType;
   effects?: string[];
   note?: string;
+  citations?: Citation[];
+  lineageStatus?: LineageStatus;
 }
 
 /** A parent -> child relationship (data/lineage.json). */
@@ -50,6 +69,9 @@ export interface Lineage {
 /** Node attributes baked into public/graph.<source>.json by the build script. */
 export interface StrainNodeAttributes {
   label: string;
+  // Stable, source-independent identity (see app/lib/strain-key.ts). Persisted
+  // references (reviews, wishlist, URLs) use this, never the node id.
+  strainKey: string;
   // Stored as `strainType` (not `type`) because Sigma reserves the node
   // `type` attribute for the rendering program name.
   strainType: StrainType;
@@ -65,6 +87,8 @@ export interface StrainNodeAttributes {
   // subtle 2D resting de-emphasis. See classifyNameKind in build-graph.ts.
   nameKind: "named" | "cross";
   note?: string;
+  citations?: Citation[];
+  lineageStatus?: LineageStatus;
   generation: number;
   descendants: number;
   x: number;
@@ -88,8 +112,35 @@ export const TYPE_COLORS: Record<StrainType, string> = {
 export const CONFIDENCE_META: Record<Confidence, { label: string; color: string; blurb: string }> = {
   curated: { label: "Curated", color: "#22c55e", blurb: "Hand-verified" }, // green
   documented: { label: "Documented", color: "#f59e0b", blurb: "Structured scrape" }, // amber
-  crowd: { label: "Crowd", color: "#ef4444", blurb: "Community-sourced, less verified" }, // red
+  crowd: { label: "Unverified", color: "#ef4444", blurb: "Community-sourced, not verified" }, // red
+  personal: { label: "Personal", color: "#38bdf8", blurb: "Added from the journal, not verified" }, // sky
 };
 
 /** Display order for the legend / filters. */
-export const STRAIN_TYPES: StrainType[] = ["landrace", "sativa", "hybrid", "indica"];
+export const STRAIN_TYPES = ["landrace", "sativa", "hybrid", "indica"] as const satisfies readonly StrainType[];
+
+/**
+ * One strain in the server-side catalog (generated/strain-catalog.json), keyed
+ * by strainKey and built from the `all` union. Strain pages and write-path
+ * validation read this instead of the much larger layout graph. Lineage is
+ * expressed in strainKeys, never node ids.
+ */
+export interface CatalogEntry {
+  key: string;
+  name: string;
+  strainType: StrainType;
+  effects: string[];
+  negatives: string[];
+  nameKind: "named" | "cross";
+  source: string;
+  confidence: Confidence;
+  note?: string;
+  citations?: Citation[];
+  lineageStatus?: LineageStatus;
+  generation: number;
+  descendants: number;
+  parents: string[];
+  children: string[];
+}
+
+export type Catalog = Record<string, CatalogEntry>;

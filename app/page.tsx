@@ -17,12 +17,22 @@ export default function Home() {
         <p className="mt-1 text-sm text-zinc-400">
           Click a strain to trace its lineage & find similar · or match by effect.
         </p>
-        <Link
-          href="/3d"
-          className="pointer-events-auto mt-2 inline-block rounded-md bg-zinc-800/80 px-3 py-1 text-xs text-zinc-300 backdrop-blur hover:bg-zinc-700"
-        >
-          Try 3D view →
-        </Link>
+        <nav className="pointer-events-auto mt-2 flex flex-wrap gap-2 text-xs">
+          {[
+            ["/journal", "Journal"],
+            ["/profile", "Profile"],
+            ["/about", "About"],
+            ["/3d", "Try 3D view →"],
+          ].map(([href, label]) => (
+            <Link
+              key={href}
+              href={href}
+              className="rounded-md bg-zinc-800/80 px-3 py-1 text-zinc-300 backdrop-blur hover:bg-zinc-700"
+            >
+              {label}
+            </Link>
+          ))}
+        </nav>
       </div>
     </main>
   );

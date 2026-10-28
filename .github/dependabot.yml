@@ -1,0 +1,22 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    target-branch: develop
+    schedule:
+      interval: weekly
+    groups:
+      # One PR for routine minor/patch bumps; majors arrive individually.
+      minor-and-patch:
+        update-types: [minor, patch]
+    ignore:
+      # 3D renderer versions are pinned deliberately (see CLAUDE.md).
+      - dependency-name: three
+      - dependency-name: "@types/three"
+      - dependency-name: react-force-graph-3d
+
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: develop
+    schedule:
+      interval: weekly

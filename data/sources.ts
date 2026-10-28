@@ -18,16 +18,33 @@ export interface SourceDef {
   confidence: Confidence;
   /** Directory under data/ holding this source's inputs. */
   dir: string;
+  /** Where the data comes from + what of it we ship; shown with provenance. */
+  attribution: string;
 }
 
 /**
  * Real, independently-compiled sources. Order is the confidence precedence used
  * by the union build: earlier entries win on conflict (curated > documented >
- * crowd). The expanded/crowd tiers are added in later Phase 4 steps.
+ * crowd).
  */
 export const SOURCES: SourceDef[] = [
-  { id: "curated", label: "Curated", confidence: "curated", dir: "curated" },
-  { id: "kushy", label: "Kushy (community)", confidence: "crowd", dir: "kushy" },
+  {
+    id: "curated",
+    label: "Curated",
+    confidence: "curated",
+    dir: "curated",
+    attribution: "Hand-authored for this project.",
+  },
+  {
+    id: "kushy",
+    label: "Unverified (2017 community)",
+    confidence: "crowd",
+    dir: "kushy",
+    attribution:
+      "Kushy community strain dataset (Nov 2017 snapshot). Names, types, lineage and " +
+      "effect tags only; lineage partly inferred from cross-style names. Unverified and " +
+      "frozen in 2017, so modern strains are missing.",
+  },
 ];
 
 /** The union pseudo-source: merge of SOURCES, provenance-tagged. */

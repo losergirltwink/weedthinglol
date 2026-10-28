@@ -11,6 +11,16 @@ import { drawDiscNodeLabel } from "sigma/rendering";
 
 import type { StrainType } from "@/app/lib/strains";
 import type { StrainGraphType } from "@/app/lib/graph-utils";
+import { RING } from "@/app/lib/overlay-types";
+import type { GraphOverlay } from "@/app/lib/useStrainExplorer";
+
+// Ring widths (relative to node size). Want-to-try is deliberately thinner than
+// a rating ring: width is its secondary encoding beside the aqua color.
+const RATED_RING = 0.3;
+const WISHLIST_RING = 0.15;
+/** Within ±this many half-stars of my mean, a rating reads as neutral. */
+const NEUTRAL_BAND = 0.5;
+const PATH_EDGE_SIZE = 3;
 
 const DIM_NODE = "#3f3f46"; // zinc-700
 const DIM_EDGE = "#1f2937"; // gray-800
@@ -44,6 +54,10 @@ interface Props {
   onSelect: (id: string | null) => void;
   /** Fired once the WebGL context is restored, so the parent can remount Sigma. */
   onContextRestored: () => void;
+  /** My journal on this graph (rating + want-to-try rings), or null. */
+  graphOverlay: GraphOverlay | null;
+  /** "How my favorites connect" highlight, or null when off. */
+  favoritePaths: { nodes: Set<string>; edges: Set<string> } | null;
 }
 
 export function GraphController({
@@ -55,6 +69,8 @@ export function GraphController({
   dimLowConfidence,
   onSelect,
   onContextRestored,
+  graphOverlay,
+  favoritePaths,
 }: Props) {
   const sigma = useSigma();
   const loadGraph = useLoadGraph();
@@ -117,11 +133,23 @@ export function GraphController({
       ? new Set<string>([hovered, ...graph.neighbors(hovered)])
       : null;
 
-    // The lit set: selected strain's family line ∪ recommended strains.
+    // The lit set: selected strain's family line ∪ recommended strains ∪ (when
+    // toggled on) the paths connecting my favorites.
     const relevantSet =
-      focusSet || highlightSet
-        ? new Set<string>([...(focusSet ?? []), ...(highlightSet ?? [])])
+      focusSet || highlightSet || favoritePaths
+        ? new Set<string>([...(focusSet ?? []), ...(highlightSet ?? []), ...(favoritePaths?.nodes ?? [])])
         : null;
+
+    const ringFor = (node: string): { ringColor: string; ringSize: number } | null => {
+      const rating = graphOverlay?.ratings.get(node);
+      if (rating) {
+        const diff = rating.avgHalves - (graphOverlay?.meanHalves ?? rating.avgHalves);
+        const ringColor = diff > NEUTRAL_BAND ? RING.above : diff < -NEUTRAL_BAND ? RING.below : RING.neutral;
+        return { ringColor, ringSize: RATED_RING };
+      }
+      if (graphOverlay?.wishlist.has(node)) return { ringColor: RING.wishlist, ringSize: WISHLIST_RING };
+      return null;
+    };
 
     const isDimmed = (node: string) =>
       (relevantSet !== null && !relevantSet.has(node)) ||
@@ -153,9 +181,11 @@ export function GraphController({
         //   • union view mutes non-curated nodes so the verified core dominates;
         //   • cross-expression nodes ("A x B") shrink + drop their label so the
         //     named-cultivar backbone reads clearly (they're connective tissue).
+        // My own strains (rated / want-to-try) are never muted at rest.
+        const ring = ringFor(node);
         const restingLowConf =
-          dimLowConfidence && !emphasized && data.confidence !== "curated";
-        const restingCross = !emphasized && data.nameKind === "cross";
+          dimLowConfidence && !emphasized && !ring && data.confidence !== "curated";
+        const restingCross = !emphasized && !ring && data.nameKind === "cross";
         let color = data.color ?? DIM_NODE;
         let size = data.size ?? 1;
         if (restingLowConf) {
@@ -168,8 +198,10 @@ export function GraphController({
           color,
           size,
           ...(restingCross ? { label: "" } : {}),
-          zIndex: node === selectedId ? 3 : isRecommended ? 2 : 1,
-          forceLabel: emphasized || undefined,
+          ...(ring ? { type: "bordered", ...ring } : {}),
+          zIndex: node === selectedId ? 3 : isRecommended ? 2 : ring ? 2 : 1,
+          // Rated strains keep their labels at rest: they're my landmarks.
+          forceLabel: emphasized || (ring && graphOverlay?.ratings.has(node)) || undefined,
           highlighted: node === selectedId,
         };
       },
@@ -190,6 +222,9 @@ export function GraphController({
         if ((relevantSet !== null || hoverSet !== null) && !inFocus) {
           return { ...data, color: DIM_EDGE, zIndex: 0 };
         }
+        if (favoritePaths?.edges.has(edge)) {
+          return { ...data, color: RING.above, size: PATH_EDGE_SIZE, zIndex: 2 };
+        }
         return { ...data, color: FOCUS_EDGE, zIndex: 1 };
       },
     });
@@ -205,6 +240,8 @@ export function GraphController({
     activeTypes,
     dimLowConfidence,
     hovered,
+    graphOverlay,
+    favoritePaths,
   ]);
 
   return null;
